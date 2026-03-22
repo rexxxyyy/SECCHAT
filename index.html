@@ -4,1525 +4,172 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SECCHAT</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=gg+sans:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap');
-
 :root {
-  --bg-primary: #313338;
-  --bg-secondary: #2b2d31;
-  --bg-tertiary: #1e1f22;
-  --bg-accent: #404249;
-  --bg-hover: #35373c;
-  --bg-modifier: #3b3d44;
-  --accent: #5865f2;
-  --accent-hover: #4752c4;
-  --accent-glow: rgba(88,101,242,0.3);
-  --green: #23a559;
-  --green-hover: #1a7a40;
-  --red: #f23f43;
-  --red-hover: #a12d2f;
-  --yellow: #f0b232;
-  --text-primary: #f2f3f5;
-  --text-secondary: #b5bac1;
-  --text-muted: #80848e;
-  --text-link: #00aff4;
-  --border: #1e1f22;
-  --scrollbar: #1e1f22;
-  --scrollbar-thumb: #3b3d44;
-  --mono: 'Share Tech Mono', monospace;
-  --ui: 'Noto Sans', sans-serif;
-  --radius: 4px;
-  --radius-lg: 8px;
+  --bg: #0a0a0a;
+  --primary: #0ff;
+  --secondary: #00aaff;
+  --danger: #ff0033;
+  --font: 'Rajdhani', monospace;
 }
-
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;overflow:hidden;}
-body{background:var(--bg-primary);color:var(--text-primary);font-family:var(--ui);font-size:16px;line-height:1.375;}
-
-/* SCROLLBAR */
-::-webkit-scrollbar{width:8px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:4px;}
-
-/* SPLASH */
-.splash{position:fixed;inset:0;background:var(--bg-tertiary);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity 0.5s;}
-.splash.hidden{opacity:0;pointer-events:none;}
-.splash-logo{font-family:var(--mono);font-size:32px;letter-spacing:8px;color:var(--accent);text-shadow:0 0 30px var(--accent-glow);}
-.splash-bar{width:200px;height:3px;background:var(--bg-accent);border-radius:2px;overflow:hidden;}
-.splash-bar-fill{height:100%;background:var(--accent);animation:splashLoad 1.4s ease forwards;}
-@keyframes splashLoad{from{width:0}to{width:100%}}
-
-/* LOGIN */
-.login-overlay{position:fixed;inset:0;background:var(--bg-tertiary);z-index:100;display:flex;align-items:center;justify-content:center;transition:opacity 0.3s;}
-.login-overlay.hidden{opacity:0;pointer-events:none;}
-.login-box{background:var(--bg-secondary);border-radius:var(--radius-lg);padding:32px;width:480px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
-.login-header{text-align:center;margin-bottom:24px;}
-.login-header h1{font-size:24px;font-weight:700;color:var(--text-primary);}
-.login-header p{font-size:14px;color:var(--text-secondary);margin-top:8px;}
-.user-select{display:flex;gap:12px;margin-bottom:20px;}
-.user-card{flex:1;background:var(--bg-tertiary);border:2px solid transparent;border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:all 0.15s;text-align:center;}
-.user-card:hover{border-color:var(--accent);background:var(--bg-modifier);}
-.user-card.selected{border-color:var(--accent);background:rgba(88,101,242,0.1);}
-.user-card-avatar{width:48px;height:48px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;}
-.user-card-name{font-size:14px;font-weight:600;color:var(--text-primary);}
-.user-card-status{font-size:12px;color:var(--green);margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px;}
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);}
-.login-pw-wrap{margin-top:4px;}
-.login-label{font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;display:block;}
-.login-input{width:100%;background:var(--bg-tertiary);border:1px solid var(--bg-tertiary);border-radius:var(--radius);color:var(--text-primary);font-family:var(--ui);font-size:16px;padding:10px 12px;outline:none;transition:border-color 0.15s;}
-.login-input:focus{border-color:var(--accent);}
-.login-input.error{border-color:var(--red);animation:shake 0.3s ease;}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.login-err{font-size:14px;color:var(--red);margin-top:8px;display:none;}
-.login-btn{width:100%;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-family:var(--ui);font-size:16px;font-weight:600;padding:12px;cursor:pointer;margin-top:16px;transition:background 0.15s;}
-.login-btn:hover{background:var(--accent-hover);}
-
-/* MAIN LAYOUT - Discord style */
-.app{display:flex;height:100vh;width:100vw;}
-
-/* LEFT SIDEBAR - servers + channels */
-.sidebar{display:flex;flex-shrink:0;}
-
-/* Server rail */
-.server-rail{width:72px;background:var(--bg-tertiary);padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:8px;overflow-y:auto;flex-shrink:0;}
-.server-icon{width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;font-weight:700;color:#fff;transition:border-radius 0.15s;position:relative;}
-.server-icon:hover,.server-icon.active{border-radius:16px;}
-.server-icon.active::before{content:'';position:absolute;left:-16px;top:50%;transform:translateY(-50%);width:8px;height:40px;background:#fff;border-radius:0 4px 4px 0;}
-.server-divider{width:32px;height:2px;background:var(--bg-modifier);border-radius:1px;}
-
-/* Channel panel */
-.channel-panel{width:240px;background:var(--bg-secondary);display:flex;flex-direction:column;flex-shrink:0;}
-.channel-header{padding:16px 12px;border-bottom:1px solid var(--border);font-size:16px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;}
-.channel-list{flex:1;overflow-y:auto;padding:8px 0;}
-.channel-category{padding:16px 8px 4px;font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;display:flex;align-items:center;gap:4px;cursor:pointer;}
-.channel-item{display:flex;align-items:center;gap:6px;padding:6px 8px;margin:0 8px;border-radius:var(--radius);cursor:pointer;color:var(--text-muted);font-size:15px;transition:all 0.1s;position:relative;}
-.channel-item:hover{background:var(--bg-modifier);color:var(--text-secondary);}
-.channel-item.active{background:var(--bg-accent);color:var(--text-primary);}
-.channel-item .ch-icon{font-size:18px;flex-shrink:0;}
-.channel-item .ch-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.channel-item .ch-badge{background:var(--red);color:#fff;font-size:11px;font-weight:700;border-radius:8px;padding:1px 5px;min-width:16px;text-align:center;}
-
-/* User panel at bottom of channel sidebar */
-.user-panel{background:var(--bg-tertiary);padding:8px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.user-panel-avatar{width:32px;height:32px;border-radius:50%;flex-shrink:0;cursor:pointer;position:relative;overflow:hidden;}
-.user-panel-avatar img{width:100%;height:100%;object-fit:cover;}
-.user-panel-avatar-placeholder{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;cursor:pointer;}
-.user-panel-info{flex:1;min-width:0;}
-.user-panel-name{font-size:14px;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.user-panel-status{font-size:12px;color:var(--text-muted);}
-.user-panel-controls{display:flex;gap:4px;}
-.icon-btn{width:32px;height:32px;border-radius:var(--radius);border:none;background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all 0.1s;}
-.icon-btn:hover{background:var(--bg-modifier);color:var(--text-primary);}
-.icon-btn.active{color:var(--text-primary);}
-.icon-btn.danger:hover{background:var(--red);color:#fff;}
-
-/* MAIN CONTENT */
-.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg-primary);}
-
-/* Channel topbar */
-.channel-topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;background:var(--bg-primary);}
-.channel-topbar-name{font-size:16px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:6px;}
-.topbar-divider{width:1px;height:24px;background:var(--bg-modifier);}
-.topbar-topic{font-size:14px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
-.topbar-actions{display:flex;gap:4px;margin-left:auto;}
-
-/* Messages */
-.messages-area{flex:1;overflow-y:auto;padding:16px 0;display:flex;flex-direction:column;}
-.msg-group{padding:2px 16px;display:flex;gap:16px;position:relative;}
-.msg-group:hover{background:rgba(0,0,0,0.06);}
-.msg-group:hover .msg-actions{opacity:1;}
-.msg-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;margin-top:2px;cursor:pointer;overflow:hidden;}
-.msg-avatar img{width:100%;height:100%;object-fit:cover;}
-.msg-avatar-placeholder{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;margin-top:2px;}
-.msg-content-wrap{flex:1;min-width:0;}
-.msg-header{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;}
-.msg-author{font-size:16px;font-weight:600;color:var(--text-primary);cursor:pointer;}
-.msg-author:hover{text-decoration:underline;}
-.msg-timestamp{font-size:12px;color:var(--text-muted);}
-.msg-text{font-size:16px;color:var(--text-primary);line-height:1.375;word-break:break-word;white-space:pre-wrap;}
-.msg-text.deleted{color:var(--text-muted);font-style:italic;}
-.msg-text.editing{display:none;}
-.msg-edit-area{display:none;margin-top:4px;}
-.msg-edit-area.active{display:block;}
-.msg-edit-input{width:100%;background:var(--bg-tertiary);border:1px solid var(--accent);border-radius:var(--radius);color:var(--text-primary);font-family:var(--ui);font-size:16px;padding:8px 12px;outline:none;resize:none;}
-.msg-edit-hint{font-size:12px;color:var(--text-muted);margin-top:4px;}
-.msg-edit-hint b{color:var(--accent);cursor:pointer;}
-.msg-image{max-width:400px;max-height:300px;border-radius:var(--radius);margin-top:4px;cursor:pointer;display:block;}
-.msg-voice{display:flex;align-items:center;gap:10px;background:var(--bg-secondary);border-radius:var(--radius-lg);padding:10px 14px;margin-top:4px;max-width:320px;}
-.voice-play-btn{width:36px;height:36px;border-radius:50%;background:var(--accent);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:background 0.1s;}
-.voice-play-btn:hover{background:var(--accent-hover);}
-.voice-waveform{flex:1;height:32px;display:flex;align-items:center;gap:2px;}
-.voice-bar{width:3px;border-radius:2px;background:var(--accent);opacity:0.6;transition:height 0.1s;}
-.voice-duration{font-size:12px;color:var(--text-muted);flex-shrink:0;}
-.msg-file{display:flex;align-items:center;gap:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;margin-top:4px;max-width:400px;cursor:pointer;transition:border-color 0.1s;}
-.msg-file:hover{border-color:var(--accent);}
-.msg-file-icon{font-size:24px;flex-shrink:0;}
-.msg-file-info{flex:1;min-width:0;}
-.msg-file-name{font-size:14px;color:var(--text-link);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.msg-file-size{font-size:12px;color:var(--text-muted);}
-.msg-self-destruct{font-size:12px;color:var(--yellow);display:flex;align-items:center;gap:4px;margin-top:4px;}
-.msg-ping{display:inline;background:rgba(88,101,242,0.3);color:#c9cdfb;border-radius:3px;padding:0 2px;cursor:pointer;}
-.msg-ping:hover{background:var(--accent);color:#fff;}
-
-/* Message actions */
-.msg-actions{position:absolute;top:-16px;right:16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);display:flex;gap:2px;padding:4px;opacity:0;transition:opacity 0.1s;z-index:10;}
-.msg-action-btn{width:32px;height:32px;border-radius:var(--radius);border:none;background:transparent;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.1s;}
-.msg-action-btn:hover{background:var(--bg-modifier);color:var(--text-primary);}
-.msg-action-btn.danger:hover{background:var(--red);color:#fff;}
-
-/* Date divider */
-.date-divider{display:flex;align-items:center;gap:12px;padding:16px 16px 8px;color:var(--text-muted);font-size:12px;font-weight:600;}
-.date-divider::before,.date-divider::after{content:'';flex:1;height:1px;background:var(--bg-modifier);}
-
-/* Typing indicator */
-.typing-indicator{padding:4px 16px 8px;font-size:13px;color:var(--text-muted);min-height:24px;}
-.typing-dots{display:inline-flex;gap:3px;margin-right:4px;}
-.typing-dot{width:5px;height:5px;border-radius:50%;background:var(--text-muted);animation:typingBounce 1.2s ease infinite;}
-.typing-dot:nth-child(2){animation-delay:0.2s;}
-.typing-dot:nth-child(3){animation-delay:0.4s;}
-@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
-
-/* Input area */
-.input-area{padding:0 16px 24px;flex-shrink:0;}
-.input-box{background:var(--bg-modifier);border-radius:var(--radius-lg);display:flex;align-items:flex-end;gap:4px;padding:0 16px;}
-.input-left-btns{display:flex;gap:2px;padding:8px 0;}
-.input-textarea{flex:1;background:transparent;border:none;color:var(--text-primary);font-family:var(--ui);font-size:16px;padding:12px 4px;outline:none;resize:none;min-height:44px;max-height:220px;line-height:1.375;}
-.input-textarea::placeholder{color:var(--text-muted);}
-.input-right-btns{display:flex;gap:2px;padding:8px 0;}
-.voice-record-btn{position:relative;}
-.voice-record-btn.recording{color:var(--red)!important;}
-.record-pulse{position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--red);animation:recordPulse 1s ease infinite;display:none;}
-.voice-record-btn.recording .record-pulse{display:block;}
-@keyframes recordPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
-
-/* Image paste preview */
-.paste-preview{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:8px;display:none;align-items:center;gap:12px;}
-.paste-preview img{max-height:80px;max-width:120px;border-radius:var(--radius);object-fit:cover;}
-.paste-preview-info{flex:1;}
-.paste-preview-name{font-size:14px;color:var(--text-primary);}
-.paste-preview-size{font-size:12px;color:var(--text-muted);}
-.paste-preview-remove{color:var(--text-muted);cursor:pointer;font-size:18px;}
-.paste-preview-remove:hover{color:var(--red);}
-
-/* CALL OVERLAY - Discord style */
-.call-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
-.call-overlay.active{opacity:1;pointer-events:all;}
-.call-window{background:var(--bg-secondary);border-radius:12px;width:900px;max-width:95vw;height:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.6);}
-.call-header{background:var(--bg-tertiary);padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
-.call-header-title{font-size:16px;font-weight:600;color:var(--text-primary);flex:1;}
-.call-status{font-size:13px;color:var(--green);display:flex;align-items:center;gap:6px;}
-.call-status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:recordPulse 2s ease infinite;}
-.call-body{flex:1;display:flex;overflow:hidden;}
-.call-videos{flex:1;display:grid;gap:8px;padding:12px;background:var(--bg-tertiary);overflow:hidden;}
-.call-videos.single{grid-template-columns:1fr;}
-.call-videos.duo{grid-template-columns:1fr 1fr;}
-.video-tile{background:#000;border-radius:var(--radius-lg);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;}
-.video-tile video{width:100%;height:100%;object-fit:cover;}
-.video-tile-label{position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:13px;font-weight:600;padding:4px 8px;border-radius:var(--radius);}
-.video-tile-avatar{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;}
-.video-tile-speaking{box-shadow:inset 0 0 0 3px var(--green);}
-.screenshare-tile{grid-column:1/-1;}
-.call-sidebar{width:220px;background:var(--bg-secondary);display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto;border-left:1px solid var(--border);}
-.call-sidebar-title{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;padding:4px 0;}
-.call-participant{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius);}
-.call-participant-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
-.call-participant-name{font-size:14px;color:var(--text-secondary);flex:1;}
-.call-participant-icons{display:flex;gap:4px;color:var(--text-muted);font-size:14px;}
-.call-controls{background:var(--bg-tertiary);padding:16px;display:flex;align-items:center;justify-content:center;gap:12px;border-top:1px solid var(--border);}
-.call-ctrl-btn{width:48px;height:48px;border-radius:50%;border:none;background:var(--bg-modifier);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all 0.15s;}
-.call-ctrl-btn:hover{background:var(--bg-accent);}
-.call-ctrl-btn.active{background:var(--bg-accent);}
-.call-ctrl-btn.muted{background:var(--red);color:#fff;}
-.call-ctrl-btn.end-call{background:var(--red);color:#fff;width:56px;height:56px;}
-.call-ctrl-btn.end-call:hover{background:var(--red-hover);}
-.call-ctrl-btn.screenshare.active{background:var(--accent);color:#fff;}
-
-/* Incoming call */
-.incoming-call{position:fixed;bottom:24px;right:24px;background:var(--bg-secondary);border-radius:var(--radius-lg);padding:16px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:600;transform:translateY(120%);transition:transform 0.3s;border:1px solid var(--border);}
-.incoming-call.active{transform:translateY(0);}
-.incoming-title{font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px;font-weight:600;}
-.incoming-caller{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
-.incoming-caller-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;}
-.incoming-caller-name{font-size:16px;font-weight:600;color:var(--text-primary);}
-.incoming-caller-sub{font-size:13px;color:var(--text-muted);}
-.incoming-btns{display:flex;gap:8px;}
-.incoming-btn{flex:1;border:none;border-radius:var(--radius);padding:10px;font-family:var(--ui);font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;}
-.incoming-btn.accept{background:var(--green);color:#fff;}
-.incoming-btn.accept:hover{background:var(--green-hover);}
-.incoming-btn.decline{background:var(--red);color:#fff;}
-.incoming-btn.decline:hover{background:var(--red-hover);}
-
-/* Audio settings modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:700;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
-.modal-overlay.active{opacity:1;pointer-events:all;}
-.modal-box{background:var(--bg-secondary);border-radius:var(--radius-lg);width:460px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
-.modal-header{background:var(--bg-tertiary);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
-.modal-title{font-size:20px;font-weight:700;color:var(--text-primary);}
-.modal-close{background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:4px;}
-.modal-close:hover{color:var(--text-primary);}
-.modal-body{padding:20px;}
-.modal-section{margin-bottom:20px;}
-.modal-section-title{font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;}
-.modal-select{width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:var(--ui);font-size:16px;padding:10px 12px;outline:none;cursor:pointer;}
-.modal-select:focus{border-color:var(--accent);}
-.modal-slider-wrap{display:flex;align-items:center;gap:12px;}
-.modal-slider{flex:1;accent-color:var(--accent);}
-.modal-slider-val{font-size:14px;color:var(--text-secondary);min-width:32px;text-align:right;}
-.voice-effect-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.voice-effect-btn{background:var(--bg-tertiary);border:2px solid transparent;border-radius:var(--radius);padding:10px;cursor:pointer;color:var(--text-secondary);font-family:var(--ui);font-size:14px;text-align:center;transition:all 0.1s;}
-.voice-effect-btn:hover{border-color:var(--accent);color:var(--text-primary);}
-.voice-effect-btn.active{border-color:var(--accent);background:rgba(88,101,242,0.15);color:var(--text-primary);}
-.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
-.btn-primary{background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-family:var(--ui);font-size:14px;font-weight:600;padding:10px 20px;cursor:pointer;transition:background 0.1s;}
-.btn-primary:hover{background:var(--accent-hover);}
-.btn-secondary{background:transparent;border:none;border-radius:var(--radius);color:var(--text-primary);font-family:var(--ui);font-size:14px;font-weight:600;padding:10px 20px;cursor:pointer;}
-.btn-secondary:hover{text-decoration:underline;}
-
-/* PFP modal */
-.pfp-dropzone{border:2px dashed var(--bg-modifier);border-radius:var(--radius-lg);padding:32px;text-align:center;cursor:pointer;transition:all 0.1s;color:var(--text-muted);}
-.pfp-dropzone:hover,.pfp-dropzone.drag{border-color:var(--accent);color:var(--text-primary);}
-.pfp-dropzone-icon{font-size:32px;margin-bottom:8px;}
-.pfp-preview-wrap{display:flex;align-items:center;justify-content:center;margin-top:16px;}
-.pfp-preview{width:80px;height:80px;border-radius:50%;object-fit:cover;display:none;}
-
-/* Ping notification */
-.ping-notif{position:fixed;top:24px;right:24px;background:var(--accent);color:#fff;border-radius:var(--radius-lg);padding:12px 16px;font-size:14px;font-weight:600;z-index:800;transform:translateX(120%);transition:transform 0.3s;display:flex;align-items:center;gap:10px;}
-.ping-notif.active{transform:translateX(0);}
-.ping-notif-close{background:transparent;border:none;color:#fff;cursor:pointer;font-size:16px;margin-left:8px;}
-
-/* Emoji reaction */
-.msg-reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
-.reaction{background:var(--bg-modifier);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-size:13px;cursor:pointer;transition:all 0.1s;display:flex;align-items:center;gap:4px;}
-.reaction:hover,.reaction.active{border-color:var(--accent);background:rgba(88,101,242,0.15);}
-.reaction-count{color:var(--text-secondary);}
-
-/* Right member panel */
-.members-panel{width:240px;background:var(--bg-secondary);padding:16px 8px;overflow-y:auto;flex-shrink:0;border-left:1px solid var(--border);}
-.members-panel.hidden{display:none;}
-.members-section-title{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;padding:8px;margin-bottom:4px;}
-.member-item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:var(--radius);cursor:pointer;transition:background 0.1s;}
-.member-item:hover{background:var(--bg-modifier);}
-.member-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;position:relative;overflow:hidden;}
-.member-avatar img{width:100%;height:100%;object-fit:cover;}
-.member-status-ring{position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-radius:50%;border:3px solid var(--bg-secondary);}
-.member-name{font-size:15px;color:var(--text-secondary);}
-.member-item:hover .member-name{color:var(--text-primary);}
-
-/* Context menu */
-.ctx-menu{position:fixed;background:var(--bg-tertiary);border-radius:var(--radius-lg);padding:6px;box-shadow:0 8px 24px rgba(0,0,0,0.5);z-index:900;min-width:160px;display:none;}
-.ctx-menu.active{display:block;}
-.ctx-item{padding:8px 12px;border-radius:var(--radius);cursor:pointer;font-size:14px;color:var(--text-primary);display:flex;align-items:center;gap:8px;transition:all 0.1s;}
-.ctx-item:hover{background:var(--accent);color:#fff;}
-.ctx-item.danger{color:var(--red);}
-.ctx-item.danger:hover{background:var(--red);color:#fff;}
-.ctx-divider{height:1px;background:var(--bg-modifier);margin:4px 0;}
-
-/* Empty state */
-.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);gap:12px;padding:32px;}
-.empty-state-icon{font-size:48px;opacity:0.5;}
-.empty-state-title{font-size:20px;font-weight:700;color:var(--text-secondary);}
-.empty-state-sub{font-size:16px;text-align:center;max-width:320px;}
-
-/* Animations */
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.msg-group{animation:fadeIn 0.15s ease;}
+body, html { margin:0; padding:0; height:100%; font-family: var(--font); background:var(--bg); color:var(--primary); }
+#login, #chat { width:100%; height:100%; display:flex; justify-content:center; align-items:center; flex-direction:column; }
+button { margin:5px; padding:10px 20px; font-size:1rem; cursor:pointer; background:none; border:2px solid var(--primary); color:var(--primary); }
+button:hover { background:var(--primary); color:var(--bg); }
+#chatUI { display:none; flex-direction:column; width:90%; max-width:800px; height:90%; background:#111; border:2px solid var(--primary); border-radius:10px; padding:10px; overflow:hidden; }
+#messages { flex:1; overflow-y:auto; margin-bottom:10px; }
+.message { padding:5px; margin:5px 0; border-radius:5px; position:relative; }
+.message.self { background:rgba(0,255,255,0.1); text-align:right; }
+.message.peer { background:rgba(0,255,255,0.2); text-align:left; }
+.message .time { font-size:0.7rem; color:#00aaff; margin-left:5px; }
+.message .edit, .message .del { cursor:pointer; font-size:0.7rem; margin-left:5px; color:#f0f; }
+#inputBox { display:flex; gap:5px; }
+#inputBox input[type=text]{ flex:1; padding:10px; font-size:1rem; border-radius:5px; border:none; background:#222; color:#0ff; }
+#inputBox button{ border:none; border-radius:5px; background:var(--primary); color:var(--bg); }
+#fileInput{display:none;}
+#wipeclick{margin-top:5px;color:var(--danger);cursor:pointer;}
 </style>
 </head>
 <body>
 
-<!-- SPLASH -->
-<div class="splash" id="splash">
-  <div class="splash-logo">SECCHAT</div>
-  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+<div id="login">
+  <h1>SECCHAT</h1>
+  <button onclick="loginPrompt('nevona5K')">nevona5K</button>
+  <button onclick="loginPrompt('ZAREX')">ZAREX</button>
 </div>
 
-<!-- LOGIN -->
-<div class="login-overlay" id="loginOverlay">
-  <div class="login-box">
-    <div class="login-header">
-      <h1>Welcome to SECCHAT</h1>
-      <p>Select your identity to continue</p>
-    </div>
-    <div class="user-select">
-      <div class="user-card" id="cardNevona" onclick="selectUser('nevona5K')">
-        <div class="user-card-avatar" style="background:#5865f2" id="avatarCardNevona">N</div>
-        <div class="user-card-name">nevona5K</div>
-        <div class="user-card-status"><span class="status-dot"></span> Online</div>
-      </div>
-      <div class="user-card" id="cardZarex" onclick="selectUser('ZAREX')">
-        <div class="user-card-avatar" style="background:#eb459e" id="avatarCardZarex">Z</div>
-        <div class="user-card-name">ZAREX</div>
-        <div class="user-card-status"><span class="status-dot"></span> Online</div>
-      </div>
-    </div>
-    <div class="login-pw-wrap" id="loginPwWrap" style="display:none">
-      <label class="login-label">Password for <span id="loginUserLabel" style="color:var(--accent)"></span></label>
-      <input class="login-input" type="password" id="loginInput" placeholder="Enter your password" autocomplete="off" />
-      <div class="login-err" id="loginErr">Incorrect password. Please try again.</div>
-      <button class="login-btn" onclick="tryLogin()">Log In</button>
-    </div>
+<div id="chatUI">
+  <div id="messages"></div>
+  <div id="inputBox">
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <input type="file" id="fileInput">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="document.getElementById('fileInput').click()">Attach</button>
   </div>
-</div>
-
-<!-- MAIN APP -->
-<div class="app" id="mainApp" style="display:none">
-
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <!-- Server rail -->
-    <div class="server-rail">
-      <div class="server-icon active" title="SECCHAT" style="background:var(--accent)">S</div>
-      <div class="server-divider"></div>
-    </div>
-
-    <!-- Channel panel -->
-    <div class="channel-panel">
-      <div class="channel-header">
-        <span>SECCHAT</span>
-        <span style="font-size:18px;cursor:pointer;color:var(--text-muted)" title="Online">🔒</span>
-      </div>
-      <div class="channel-list">
-        <div class="channel-category">📢 Text Channels</div>
-        <div class="channel-item active" onclick="switchChannel('general')">
-          <span class="ch-icon">#</span>
-          <span class="ch-name">general</span>
-        </div>
-        <div class="channel-category">🔊 Voice Channels</div>
-        <div class="channel-item" id="voiceChannelItem" onclick="startCall()">
-          <span class="ch-icon">🔊</span>
-          <span class="ch-name">Voice Chat</span>
-        </div>
-      </div>
-
-      <!-- User panel -->
-      <div class="user-panel">
-        <div id="myAvatarPanel" onclick="openPfpModal()" title="Change avatar" style="cursor:pointer"></div>
-        <div class="user-panel-info">
-          <div class="user-panel-name" id="myNamePanel">—</div>
-          <div class="user-panel-status" id="myStatusPanel">Online</div>
-        </div>
-        <div class="user-panel-controls">
-          <button class="icon-btn" id="micToggleBtn" onclick="toggleMic()" title="Toggle Mic">🎤</button>
-          <button class="icon-btn" onclick="openAudioSettings()" title="Audio Settings">⚙️</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MAIN CONTENT -->
-  <div class="main">
-    <!-- Topbar -->
-    <div class="channel-topbar">
-      <div class="channel-topbar-name"># general</div>
-      <div class="topbar-divider"></div>
-      <div class="topbar-topic">Private encrypted channel</div>
-      <div class="topbar-actions">
-        <button class="icon-btn" onclick="startCall()" title="Start Voice Call">📞</button>
-        <button class="icon-btn" onclick="toggleMembers()" title="Toggle Members">👥</button>
-        <button class="icon-btn" onclick="pingPeer()" title="Ping user">🔔</button>
-      </div>
-    </div>
-
-    <!-- Messages -->
-    <div class="messages-area" id="messagesArea">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-state-icon">🔒</div>
-        <div class="empty-state-title">This is the beginning</div>
-        <div class="empty-state-sub">Start your private encrypted conversation</div>
-      </div>
-    </div>
-
-    <div class="typing-indicator" id="typingIndicator"></div>
-
-    <!-- Input -->
-    <div class="input-area">
-      <div class="paste-preview" id="pastePreview">
-        <img id="pastePreviewImg" src="" alt=""/>
-        <div class="paste-preview-info">
-          <div class="paste-preview-name" id="pastePreviewName">image.png</div>
-          <div class="paste-preview-size" id="pastePreviewSize"></div>
-        </div>
-        <span class="paste-preview-remove" onclick="clearPaste()">✕</span>
-      </div>
-      <div class="input-box">
-        <div class="input-left-btns">
-          <button class="icon-btn" onclick="triggerFileInput()" title="Attach file">➕</button>
-        </div>
-        <textarea class="input-textarea" id="msgInput" placeholder="Message #general"
-          onkeydown="handleKey(event)" oninput="handleTyping()" rows="1"></textarea>
-        <div class="input-right-btns">
-          <button class="icon-btn voice-record-btn" id="voiceRecordBtn" onclick="toggleVoiceRecord()" title="Voice message">
-            🎙️
-            <span class="record-pulse"></span>
-          </button>
-          <button class="icon-btn" onclick="sendMessage()" title="Send">➤</button>
-        </div>
-      </div>
-      <input type="file" id="fileInput" style="display:none" accept="*/*" onchange="handleFileSelect(event)"/>
-    </div>
-  </div>
-
-  <!-- Members panel -->
-  <div class="members-panel hidden" id="membersPanel">
-    <div class="members-section-title">Online — 2</div>
-    <div class="member-item" id="memberNevona">
-      <div class="member-avatar" id="memberAvatarNevona" style="background:#5865f2">N
-        <div class="member-status-ring" style="background:var(--green)"></div>
-      </div>
-      <div class="member-name">nevona5K</div>
-    </div>
-    <div class="member-item" id="memberZarex">
-      <div class="member-avatar" id="memberAvatarZarex" style="background:#eb459e">Z
-        <div class="member-status-ring" style="background:var(--green)"></div>
-      </div>
-      <div class="member-name">ZAREX</div>
-    </div>
-  </div>
-</div>
-
-<!-- CALL OVERLAY -->
-<div class="call-overlay" id="callOverlay">
-  <div class="call-window">
-    <div class="call-header">
-      <div class="call-header-title">🔊 Voice Chat</div>
-      <div class="call-status"><span class="call-status-dot"></span><span id="callStatusText">Connected</span></div>
-      <div style="display:flex;gap:4px;margin-left:auto">
-        <button class="icon-btn" onclick="openAudioSettings()" title="Audio Settings">⚙️</button>
-      </div>
-    </div>
-    <div class="call-body">
-      <div class="call-videos duo" id="callVideos">
-        <div class="video-tile" id="myVideoTile">
-          <div class="video-tile-avatar" id="myCallAvatar" style="background:#5865f2">N</div>
-          <video id="myVideo" autoplay muted playsinline style="display:none"></video>
-          <div class="video-tile-label" id="myVideoLabel">nevona5K (You)</div>
-        </div>
-        <div class="video-tile" id="peerVideoTile">
-          <div class="video-tile-avatar" id="peerCallAvatar" style="background:#eb459e">Z</div>
-          <video id="peerVideo" autoplay playsinline style="display:none"></video>
-          <div class="video-tile-label" id="peerVideoLabel">ZAREX</div>
-        </div>
-      </div>
-      <div class="call-sidebar">
-        <div class="call-sidebar-title">Participants</div>
-        <div class="call-participant">
-          <div class="call-participant-avatar" id="callParticipantAvatar1" style="background:#5865f2">N</div>
-          <div class="call-participant-name" id="callParticipantName1">nevona5K</div>
-          <div class="call-participant-icons" id="callParticipantIcons1">🎤</div>
-        </div>
-        <div class="call-participant">
-          <div class="call-participant-avatar" id="callParticipantAvatar2" style="background:#eb459e">Z</div>
-          <div class="call-participant-name" id="callParticipantName2">ZAREX</div>
-          <div class="call-participant-icons">🎤</div>
-        </div>
-      </div>
-    </div>
-    <div class="call-controls">
-      <button class="call-ctrl-btn" id="callMicBtn" onclick="toggleCallMic()" title="Toggle Mic">🎤</button>
-      <button class="call-ctrl-btn screenshare" id="screenShareBtn" onclick="toggleScreenShare()" title="Share Screen">🖥️</button>
-      <button class="call-ctrl-btn end-call" onclick="endCall()" title="End Call">📵</button>
-    </div>
-  </div>
-</div>
-
-<!-- INCOMING CALL -->
-<div class="incoming-call" id="incomingCall">
-  <div class="incoming-title">Incoming Call</div>
-  <div class="incoming-caller">
-    <div class="incoming-caller-avatar" id="incomingAvatar" style="background:#eb459e">Z</div>
-    <div>
-      <div class="incoming-caller-name" id="incomingName">ZAREX</div>
-      <div class="incoming-caller-sub">Voice Call</div>
-    </div>
-  </div>
-  <div class="incoming-btns">
-    <button class="incoming-btn accept" onclick="acceptCall()">Accept</button>
-    <button class="incoming-btn decline" onclick="declineCall()">Decline</button>
-  </div>
-</div>
-
-<!-- AUDIO SETTINGS MODAL -->
-<div class="modal-overlay" id="audioModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title">Voice & Audio</div>
-      <button class="modal-close" onclick="closeModal('audioModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-section">
-        <div class="modal-section-title">Input Device (Microphone)</div>
-        <select class="modal-select" id="micSelect"></select>
-      </div>
-      <div class="modal-section">
-        <div class="modal-section-title">Output Device (Speaker)</div>
-        <select class="modal-select" id="speakerSelect"></select>
-      </div>
-      <div class="modal-section">
-        <div class="modal-section-title">Input Volume</div>
-        <div class="modal-slider-wrap">
-          <span>🎤</span>
-          <input type="range" class="modal-slider" id="micVolumeSlider" min="0" max="200" value="100" oninput="updateSliderVal(this,'micVolVal')"/>
-          <span class="modal-slider-val" id="micVolVal">100%</span>
-        </div>
-      </div>
-      <div class="modal-section">
-        <div class="modal-section-title">Voice Effects</div>
-        <div class="voice-effect-grid">
-          <button class="voice-effect-btn active" onclick="setVoiceEffect(this,'none')">🎙️ Normal</button>
-          <button class="voice-effect-btn" onclick="setVoiceEffect(this,'robot')">🤖 Robot</button>
-          <button class="voice-effect-btn" onclick="setVoiceEffect(this,'deep')">🎸 Deep</button>
-          <button class="voice-effect-btn" onclick="setVoiceEffect(this,'chipmunk')">🐿️ Chipmunk</button>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('audioModal')">Cancel</button>
-      <button class="btn-primary" onclick="saveAudioSettings()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- PFP MODAL -->
-<div class="modal-overlay" id="pfpModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <div class="modal-title">Change Avatar</div>
-      <button class="modal-close" onclick="closeModal('pfpModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="pfp-dropzone" id="pfpDropzone" onclick="document.getElementById('pfpFileInput').click()"
-        ondragover="event.preventDefault();this.classList.add('drag')"
-        ondragleave="this.classList.remove('drag')"
-        ondrop="handlePfpDrop(event)">
-        <div class="pfp-dropzone-icon">🖼️</div>
-        <div>Click to upload or drag & drop</div>
-        <div style="font-size:13px;margin-top:4px;color:var(--text-muted)">PNG, JPG, GIF up to 8MB</div>
-      </div>
-      <div class="pfp-preview-wrap">
-        <img class="pfp-preview" id="pfpPreview" src="" alt=""/>
-      </div>
-      <input type="file" id="pfpFileInput" style="display:none" accept="image/*" onchange="handlePfpSelect(event)"/>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal('pfpModal')">Cancel</button>
-      <button class="btn-primary" onclick="savePfp()">Save Avatar</button>
-    </div>
-  </div>
-</div>
-
-<!-- PING NOTIFICATION -->
-<div class="ping-notif" id="pingNotif">
-  <span>🔔</span>
-  <span id="pingNotifText">You were pinged!</span>
-  <button class="ping-notif-close" onclick="closePingNotif()">✕</button>
-</div>
-
-<!-- CONTEXT MENU -->
-<div class="ctx-menu" id="ctxMenu">
-  <div class="ctx-item" id="ctxEdit" onclick="ctxEditMsg()">✏️ Edit Message</div>
-  <div class="ctx-item danger" id="ctxDelete" onclick="ctxDeleteMsg()">🗑️ Delete Message</div>
-  <div class="ctx-divider"></div>
-  <div class="ctx-item" onclick="ctxReact()">😀 Add Reaction</div>
+  <div id="wipeclick" onclick="wipeChat()">WIPE ALL CHATS</div>
 </div>
 
 <script>
 const API = "https://secchat-backend-production.up.railway.app";
 
-// ===== STATE =====
-let currentUser = null;
-let currentPassword = null;
-let peerUser = null;
-let selectedUser = null;
-let chatMessages = [];
-let pollInterval = null;
-let pendingFile = null;
-let pendingImage = null;
-let isRecording = false;
-let mediaRecorder = null;
-let audioChunks = [];
-let localStream = null;
-let screenStream = null;
-let inCall = false;
-let micMuted = false;
-let callMicMuted = false;
-let screenSharing = false;
-let voiceEffect = 'none';
-let myPfp = null;
-let peerPfp = null;
-let ctxTargetId = null;
-let typingTimer = null;
-let isTyping = false;
+let username="", peer="", chatMessages=[], autoDeleteTimers={};
 
-const COLORS = { nevona5K: '#5865f2', ZAREX: '#eb459e' };
-
-// ===== STARTUP =====
-window.addEventListener('load', async () => {
-  try { await fetch(`${API}/messages`); } catch(e) {}
-  setTimeout(() => {
-    document.getElementById('splash').classList.add('hidden');
-    document.getElementById('loginOverlay').style.opacity = '1';
-  }, 1500);
-  document.getElementById('loginInput').addEventListener('keydown', e => { if(e.key==='Enter') tryLogin(); });
-  document.addEventListener('click', hideCtxMenu);
-  document.addEventListener('paste', handleGlobalPaste);
-  loadSavedPfps();
-});
-
-function loadSavedPfps() {
-  const np = localStorage.getItem('pfp_nevona5K');
-  const zp = localStorage.getItem('pfp_ZAREX');
-  if(np) myPfp = np, peerPfp = np; // will be reassigned on login
-  if(np) localStorage.setItem('pfp_nevona5K', np);
-  if(zp) localStorage.setItem('pfp_ZAREX', zp);
-}
-
-// ===== LOGIN =====
-function selectUser(name) {
-  selectedUser = name;
-  document.querySelectorAll('.user-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('card' + (name === 'nevona5K' ? 'Nevona' : 'Zarex')).classList.add('selected');
-  document.getElementById('loginPwWrap').style.display = 'block';
-  document.getElementById('loginUserLabel').textContent = name;
-  document.getElementById('loginErr').style.display = 'none';
-  document.getElementById('loginInput').value = '';
-  setTimeout(() => document.getElementById('loginInput').focus(), 50);
-}
-
-async function tryLogin() {
-  const pw = document.getElementById('loginInput').value;
-  if (!selectedUser || !pw) return;
-  try {
-    const res = await fetch(`${API}/login`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username: selectedUser, password: pw })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      currentUser = selectedUser;
-      currentPassword = pw;
-      peerUser = data.peer;
-      enterApp();
-    } else {
-      document.getElementById('loginInput').classList.add('error');
-      document.getElementById('loginErr').style.display = 'block';
-      setTimeout(() => document.getElementById('loginInput').classList.remove('error'), 400);
-    }
-  } catch(e) { alert('Cannot reach server'); }
-}
-
-function enterApp() {
-  document.getElementById('loginOverlay').classList.add('hidden');
-  document.getElementById('mainApp').style.display = 'flex';
-
-  // Set up UI
-  const color = COLORS[currentUser];
-  const initial = currentUser[0].toUpperCase();
-  const peerInitial = peerUser[0].toUpperCase();
-  const peerColor = COLORS[peerUser];
-
-  document.getElementById('myNamePanel').textContent = currentUser;
-
-  // User panel avatar
-  setAvatarEl('myAvatarPanel', currentUser, 32, true);
-
-  // Call avatars
-  document.getElementById('myCallAvatar').textContent = initial;
-  document.getElementById('myCallAvatar').style.background = color;
-  document.getElementById('myVideoLabel').textContent = currentUser + ' (You)';
-  document.getElementById('peerCallAvatar').textContent = peerInitial;
-  document.getElementById('peerCallAvatar').style.background = peerColor;
-  document.getElementById('peerVideoLabel').textContent = peerUser;
-
-  // Participant names
-  document.getElementById('callParticipantName1').textContent = currentUser;
-  document.getElementById('callParticipantAvatar1').textContent = initial;
-  document.getElementById('callParticipantAvatar1').style.background = color;
-  document.getElementById('callParticipantName2').textContent = peerUser;
-  document.getElementById('callParticipantAvatar2').textContent = peerInitial;
-  document.getElementById('callParticipantAvatar2').style.background = peerColor;
-
-  // Members panel
-  setAvatarEl('memberAvatarNevona', 'nevona5K', 32);
-  setAvatarEl('memberAvatarZarex', 'ZAREX', 32);
-
-  // Incoming call
-  document.getElementById('incomingName').textContent = peerUser;
-  document.getElementById('incomingAvatar').textContent = peerInitial;
-  document.getElementById('incomingAvatar').style.background = peerColor;
-
-  loadMessages();
-  pollInterval = setInterval(pollAll, 2500);
-  populateAudioDevices();
-}
-
-function setAvatarEl(elId, username, size, isPanel=false) {
-  const el = document.getElementById(elId);
-  if (!el) return;
-  const pfp = localStorage.getItem('pfp_' + username);
-  const color = COLORS[username] || '#5865f2';
-  const initial = username[0].toUpperCase();
-  if (pfp) {
-    el.innerHTML = `<img src="${pfp}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block"/>`;
-    el.style.background = 'transparent';
-  } else {
-    if (isPanel) {
-      el.outerHTML; // skip
-      const parent = el.parentElement;
-      // replace with placeholder
-      el.innerHTML = '';
-      el.style.cssText = `width:${size}px;height:${size}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;cursor:pointer;`;
-      el.textContent = initial;
-    } else {
-      el.style.background = color;
-      el.textContent = initial;
-    }
-  }
-}
-
-// ===== POLL =====
-async function pollAll() {
-  await loadMessages();
-  checkSignals();
-}
-
-async function checkSignals() {
-  try {
-    const res = await fetch(`${API}/signals?user=${currentUser}`);
-    const sigs = await res.json();
-    for (const sig of sigs) {
-      if (sig.type === 'call_request' && !inCall) showIncomingCall();
-      if (sig.type === 'call_accepted') openCallOverlay();
-      if (sig.type === 'call_ended') endCallUI();
-      if (sig.type === 'ping') showPingNotif(sig.from);
-      if (sig.type === 'pfp_update') {
-        localStorage.setItem('pfp_' + sig.from, sig.data);
-        refreshPeerAvatars();
-      }
-      if (sig.type === 'typing') showTyping(sig.from);
-    }
-  } catch(e) {}
-}
-
-async function sendSignal(type, data={}) {
-  try {
-    await fetch(`${API}/signal`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ from: currentUser, to: peerUser, type, ...data })
-    });
-  } catch(e) {}
-}
-
-// ===== MESSAGES =====
-async function loadMessages() {
-  try {
-    const res = await fetch(`${API}/messages`);
-    const msgs = await res.json();
-    if (JSON.stringify(msgs) !== JSON.stringify(chatMessages)) {
-      chatMessages = msgs;
-      renderMessages();
-    }
-  } catch(e) {}
-}
-
-async function sendToServer(msg) {
-  try {
-    await fetch(`${API}/messages`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(msg)
-    });
-  } catch(e) {}
-}
-
-async function updateOnServer(id, text) {
-  try {
-    await fetch(`${API}/message/${id}`, {
-      method: 'PATCH',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ text })
-    });
-  } catch(e) {}
-}
-
-async function deleteOnServer(id) {
-  try {
-    await fetch(`${API}/message/${id}`, { method: 'DELETE' });
-  } catch(e) {}
-}
-
-function getTime() { return new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
-function getDate() { return new Date().toLocaleDateString('en-GB',{weekday:'long',month:'long',day:'numeric'}); }
-
-function formatFileSize(b) {
-  if(b<1024) return b+' B';
-  if(b<1048576) return (b/1024).toFixed(1)+' KB';
-  if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
-  return (b/1073741824).toFixed(2)+' GB';
-}
-
-function getFileIcon(name) {
-  const ext = (name||'').split('.').pop().toLowerCase();
-  if(['jpg','jpeg','png','gif','webp','bmp','svg','avif','heic'].includes(ext)) return '🖼️';
-  if(['mp4','webm','mov','avi','mkv','flv','wmv'].includes(ext)) return '🎬';
-  if(['mp3','wav','ogg','flac','aac'].includes(ext)) return '🎵';
-  if(['pdf'].includes(ext)) return '📕';
-  if(['doc','docx'].includes(ext)) return '📝';
-  if(['xls','xlsx'].includes(ext)) return '📊';
-  if(['zip','rar','7z','tar','gz'].includes(ext)) return '📦';
-  if(['js','ts','py','html','css','json','sh','c','cpp','java','go','rs','php'].includes(ext)) return '💻';
-  return '📎';
-}
-
-function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function parsePasteCommand(text) {
-  const m = text.match(/^paste\[(.+?)\]\s*format=\((.+?)\)$/s);
-  return m ? { script: m[1], ext: m[2].trim() } : null;
-}
-
-function parseDeleteTimer(text) {
-  const m = text.match(/^delete:wait\((\d+)s\)=(.+)$/s);
-  return m ? { seconds: parseInt(m[1]), text: m[2] } : null;
-}
-
-function processPings(text) {
-  return text.replace(/@(nevona5K|ZAREX)/g, '<span class="msg-ping">@$1</span>');
-}
-
-async function sendMessage() {
-  const ta = document.getElementById('msgInput');
-  const rawText = ta.value.trim();
-  if (!rawText && !pendingFile && !pendingImage) return;
-
-  const msg = {
-    id: Date.now().toString(),
-    sender: currentUser,
-    time: getTime(),
-    date: getDate(),
-    text: rawText || null,
-    file: null,
-    image: null,
-    voice: null,
-    download: null,
-    selfDestruct: null,
-    deleted: false,
-    edited: false
-  };
-
-  // Image paste
-  if (pendingImage) {
-    msg.image = { dataUrl: pendingImage.dataUrl, name: pendingImage.name, size: pendingImage.size };
-    clearPaste();
-  }
-
-  // File
-  if (pendingFile) {
-    msg.file = { name: pendingFile.name, size: pendingFile.size, dataUrl: pendingFile.dataUrl };
-    pendingFile = null;
-  }
-
-  // Parse commands
-  if (rawText) {
-    const pasteCmd = parsePasteCommand(rawText);
-    const deleteCmd = parseDeleteTimer(rawText);
-    if (pasteCmd) {
-      msg.text = null;
-      msg.download = { content: pasteCmd.script, ext: pasteCmd.ext, name: `export.${pasteCmd.ext}` };
-    } else if (deleteCmd) {
-      msg.text = deleteCmd.text;
-      msg.selfDestruct = deleteCmd.seconds;
-    }
-    // Check for ping
-    if (rawText.includes('@' + peerUser)) {
-      sendSignal('ping');
-    }
-  }
-
-  ta.value = ''; ta.style.height = '';
-  chatMessages.push(msg);
-  document.getElementById('emptyState')?.remove();
-  renderMessages();
-  scrollBottom();
-  await sendToServer(msg);
-
-  // Self destruct
-  if (msg.selfDestruct) {
-    setTimeout(async () => {
-      msg.deleted = true;
-      msg.text = 'This message was deleted';
-      renderMessages();
-      await updateOnServer(msg.id, null);
-    }, msg.selfDestruct * 1000);
-  }
-}
-
-function renderMessages() {
-  const area = document.getElementById('messagesArea');
-  const wasAtBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 100;
-
-  area.innerHTML = '';
-  if (chatMessages.length === 0) {
-    area.innerHTML = `<div class="empty-state" id="emptyState"><div class="empty-state-icon">🔒</div><div class="empty-state-title">This is the beginning</div><div class="empty-state-sub">Start your private encrypted conversation</div></div>`;
-    return;
-  }
-
-  let lastDate = null;
-  chatMessages.forEach(msg => {
-    if (msg.date && msg.date !== lastDate) {
-      lastDate = msg.date;
-      const div = document.createElement('div');
-      div.className = 'date-divider';
-      div.textContent = msg.date;
-      area.appendChild(div);
-    }
-    area.appendChild(buildMsgEl(msg));
+async function loginPrompt(user){
+  let pw = prompt(`Enter password for ${user}`);
+  const res = await fetch(`${API}/login`, {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({username:user,password:pw})
   });
-
-  if (wasAtBottom) scrollBottom();
+  if(res.status===200){
+    const data = await res.json();
+    if(data.ok){
+      username = user;
+      peer = data.peer;
+      document.getElementById('login').style.display='none';
+      document.getElementById('chatUI').style.display='flex';
+      loadMessages();
+      setInterval(loadMessages,3000);
+    } else alert("Wrong password");
+  } else alert("Login failed");
 }
 
-function buildMsgEl(msg) {
-  const isMine = msg.sender === currentUser;
-  const color = COLORS[msg.sender] || '#5865f2';
-  const pfp = localStorage.getItem('pfp_' + msg.sender);
+async function loadMessages(){
+  const res = await fetch(`${API}/messages`);
+  const msgs = await res.json();
+  chatMessages = msgs;
+  renderMessages();
+}
 
-  const group = document.createElement('div');
-  group.className = 'msg-group';
-  group.dataset.id = msg.id;
-
-  // Avatar
-  const avatarEl = document.createElement('div');
-  if (pfp) {
-    avatarEl.className = 'msg-avatar';
-    avatarEl.innerHTML = `<img src="${pfp}" alt=""/>`;
-  } else {
-    avatarEl.className = 'msg-avatar-placeholder';
-    avatarEl.style.background = color;
-    avatarEl.textContent = (msg.sender||'?')[0].toUpperCase();
-  }
-  group.appendChild(avatarEl);
-
-  // Content
-  const contentWrap = document.createElement('div');
-  contentWrap.className = 'msg-content-wrap';
-
-  // Header
-  const header = document.createElement('div');
-  header.className = 'msg-header';
-  header.innerHTML = `<span class="msg-author" style="color:${color}">${escHtml(msg.sender)}</span><span class="msg-timestamp">${msg.time||''}</span>`;
-  if (msg.edited && !msg.deleted) header.innerHTML += `<span style="font-size:12px;color:var(--text-muted)">(edited)</span>`;
-  contentWrap.appendChild(header);
-
-  // Text
-  if (msg.deleted) {
-    const p = document.createElement('div');
-    p.className = 'msg-text deleted';
-    p.textContent = '🗑️ This message was deleted';
-    contentWrap.appendChild(p);
-  } else if (msg.text) {
-    const p = document.createElement('div');
-    p.className = 'msg-text';
-    p.innerHTML = processPings(escHtml(msg.text));
-    contentWrap.appendChild(p);
-
-    // Self destruct indicator
-    if (msg.selfDestruct) {
-      const sd = document.createElement('div');
-      sd.className = 'msg-self-destruct';
-      sd.innerHTML = `⏳ Deletes after ${msg.selfDestruct}s`;
-      contentWrap.appendChild(sd);
+function renderMessages(){
+  const container = document.getElementById('messages');
+  container.innerHTML="";
+  chatMessages.forEach((m,i)=>{
+    let div = document.createElement('div');
+    div.className='message '+(m.user===username?'self':'peer');
+    div.innerHTML=`<span>${m.user}: ${m.text}</span> <span class="time">${m.time}</span>`;
+    if(m.user===username){
+      const edit=document.createElement('span');
+      edit.className='edit'; edit.textContent='✎'; edit.onclick=()=>editMessage(i);
+      const del=document.createElement('span');
+      del.className='del'; del.textContent='🗑'; del.onclick=()=>deleteMessage(i);
+      div.appendChild(edit); div.appendChild(del);
     }
+    container.appendChild(div);
+  });
+  container.scrollTop=container.scrollHeight;
+}
 
-    // Edit area
-    if (isMine) {
-      const editArea = document.createElement('div');
-      editArea.className = 'msg-edit-area';
-      editArea.id = 'edit_' + msg.id;
-      editArea.innerHTML = `<textarea class="msg-edit-input" id="editInput_${msg.id}" rows="2">${escHtml(msg.text)}</textarea><div class="msg-edit-hint">Press <b onclick="saveEdit('${msg.id}')">Enter</b> to save · <b onclick="cancelEdit('${msg.id}')">Esc</b> to cancel</div>`;
-      contentWrap.appendChild(editArea);
-      const editInput = editArea.querySelector('textarea');
-      editInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(msg.id); }
-        if (e.key === 'Escape') cancelEdit(msg.id);
-      });
-    }
+async function sendMessage(){
+  const input = document.getElementById('messageInput');
+  let text=input.value;
+  if(!text) return;
+  // handle wait:(5s)=auto delete
+  const waitMatch = text.match(/^wait:\((\d+)s\)=(.*)$/);
+  let timerSec=null;
+  if(waitMatch){
+    text=waitMatch[2];
+    timerSec=parseInt(waitMatch[1])*1000;
   }
-
-  // Image
-  if (msg.image) {
-    const img = document.createElement('img');
-    img.className = 'msg-image';
-    img.src = msg.image.dataUrl;
-    img.alt = msg.image.name || 'image';
-    img.onclick = () => window.open(msg.image.dataUrl, '_blank');
-    contentWrap.appendChild(img);
+  const msgObj={user:username,text};
+  chatMessages.push(msgObj);
+  renderMessages();
+  await fetch(`${API}/messages`, {
+    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(msgObj)
+  });
+  if(timerSec){
+    const idx = chatMessages.length-1;
+    autoDeleteTimers[idx]=setTimeout(()=>deleteMessage(idx),timerSec);
   }
+  input.value="";
+}
 
-  // Voice message
-  if (msg.voice) {
-    const vm = document.createElement('div');
-    vm.className = 'msg-voice';
-    const bars = Array.from({length:20}, (_,i) => `<div class="voice-bar" style="height:${8+Math.random()*20}px"></div>`).join('');
-    vm.innerHTML = `<button class="voice-play-btn" onclick="playVoice('${msg.id}')">▶</button><div class="voice-waveform">${bars}</div><span class="voice-duration">${msg.voice.duration||'0:00'}</span>`;
-    contentWrap.appendChild(vm);
-    if (msg.voice.dataUrl) {
-      const audio = document.createElement('audio');
-      audio.id = 'audio_' + msg.id;
-      audio.src = msg.voice.dataUrl;
-      audio.style.display = 'none';
-      contentWrap.appendChild(audio);
-    }
-  }
-
-  // File
-  if (msg.file) {
-    const fb = document.createElement('div');
-    fb.className = 'msg-file';
-    fb.innerHTML = `<span class="msg-file-icon">${getFileIcon(msg.file.name)}</span><div class="msg-file-info"><div class="msg-file-name">${escHtml(msg.file.name)}</div><div class="msg-file-size">${formatFileSize(msg.file.size)}</div></div><span>↓</span>`;
-    if (msg.file.dataUrl) fb.onclick = () => { const a=document.createElement('a'); a.href=msg.file.dataUrl; a.download=msg.file.name; a.click(); };
-    contentWrap.appendChild(fb);
-  }
-
-  // Download
-  if (msg.download) {
-    const fb = document.createElement('div');
-    fb.className = 'msg-file';
-    fb.innerHTML = `<span class="msg-file-icon">💻</span><div class="msg-file-info"><div class="msg-file-name">${escHtml(msg.download.name)}</div><div class="msg-file-size">Script · .${escHtml(msg.download.ext)}</div></div><span>↓</span>`;
-    fb.onclick = () => {
-      const blob = new Blob([msg.download.content],{type:'text/plain'});
-      const url = URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download=msg.download.name; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
-    };
-    contentWrap.appendChild(fb);
-  }
-
-  group.appendChild(contentWrap);
-
-  // Message actions (on hover)
-  if (!msg.deleted) {
-    const actions = document.createElement('div');
-    actions.className = 'msg-actions';
-    let btns = `<button class="msg-action-btn" onclick="addReaction('${msg.id}')" title="React">😀</button>`;
-    if (isMine) {
-      btns += `<button class="msg-action-btn" onclick="startEdit('${msg.id}')" title="Edit">✏️</button>`;
-      btns += `<button class="msg-action-btn danger" onclick="deleteMsg('${msg.id}')" title="Delete">🗑️</button>`;
-    }
-    actions.innerHTML = btns;
-    group.appendChild(actions);
-
-    // Right-click context menu
-    group.addEventListener('contextmenu', e => {
-      e.preventDefault();
-      if (isMine) showCtxMenu(e.clientX, e.clientY, msg.id, msg.text);
+// edit and delete
+async function editMessage(idx){
+  const newText = prompt("Edit your message:",chatMessages[idx].text);
+  if(newText!==null){
+    chatMessages[idx].text=newText;
+    renderMessages();
+    await fetch(`${API}/messages`, {
+      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(chatMessages[idx])
     });
   }
-
-  return group;
 }
 
-function scrollBottom() { const a=document.getElementById('messagesArea'); setTimeout(()=>a.scrollTop=a.scrollHeight,50); }
-
-// ===== EDIT / DELETE =====
-function startEdit(id) {
-  const editArea = document.getElementById('edit_' + id);
-  const textEl = editArea?.previousElementSibling;
-  if (!editArea) return;
-  editArea.classList.add('active');
-  if (textEl) textEl.classList.add('editing');
-  const inp = document.getElementById('editInput_' + id);
-  if (inp) { inp.focus(); inp.selectionStart = inp.value.length; }
-}
-
-function cancelEdit(id) {
-  const editArea = document.getElementById('edit_' + id);
-  const textEl = editArea?.previousElementSibling;
-  if (editArea) editArea.classList.remove('active');
-  if (textEl) textEl.classList.remove('editing');
-}
-
-async function saveEdit(id) {
-  const inp = document.getElementById('editInput_' + id);
-  if (!inp) return;
-  const newText = inp.value.trim();
-  if (!newText) return;
-  const msg = chatMessages.find(m => m.id === id);
-  if (msg) { msg.text = newText; msg.edited = true; }
+async function deleteMessage(idx){
+  chatMessages.splice(idx,1);
   renderMessages();
-  await updateOnServer(id, newText);
+  await fetch(`${API}/wipe`,{
+    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username,password:prompt("Confirm password to delete")})
+  });
 }
 
-async function deleteMsg(id) {
-  const msg = chatMessages.find(m => m.id === id);
-  if (msg) { msg.deleted = true; }
-  renderMessages();
-  await deleteOnServer(id);
+// WIPE function
+async function wipeChat(){
+  const pw = prompt("Enter your password to wipe all chats");
+  const res = await fetch(`${API}/wipe`,{
+    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username,password:pw})
+  });
+  if(res.status===200){chatMessages=[]; renderMessages();}
+  else alert("Wrong password");
 }
 
-// Context menu
-function showCtxMenu(x, y, id, text) {
-  ctxTargetId = id;
-  const menu = document.getElementById('ctxMenu');
-  menu.style.left = x + 'px';
-  menu.style.top = y + 'px';
-  menu.classList.add('active');
-  document.getElementById('ctxEdit').style.display = text ? 'flex' : 'none';
-}
-function hideCtxMenu() { document.getElementById('ctxMenu').classList.remove('active'); }
-function ctxEditMsg() { if(ctxTargetId) startEdit(ctxTargetId); hideCtxMenu(); }
-function ctxDeleteMsg() { if(ctxTargetId) deleteMsg(ctxTargetId); hideCtxMenu(); }
-function ctxReact() { if(ctxTargetId) addReaction(ctxTargetId); hideCtxMenu(); }
-
-// Reactions (simple)
-function addReaction(id) {
-  const emojis = ['👍','❤️','😂','🔥','👀','✅'];
-  const emoji = emojis[Math.floor(Math.random()*emojis.length)];
-  const msg = chatMessages.find(m => m.id === id);
-  if (!msg) return;
-  if (!msg.reactions) msg.reactions = {};
-  msg.reactions[emoji] = (msg.reactions[emoji]||0) + 1;
-  renderMessages();
-}
-
-// ===== VOICE MESSAGES =====
-async function toggleVoiceRecord() {
-  if (!isRecording) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(audioChunks, {type:'audio/webm'});
-        const dataUrl = await blobToDataUrl(blob);
-        const duration = formatDuration(Math.round((Date.now() - recordStart) / 1000));
-        const msg = {
-          id: Date.now().toString(),
-          sender: currentUser,
-          time: getTime(),
-          date: getDate(),
-          text: null,
-          voice: { dataUrl, duration },
-          deleted: false
-        };
-        chatMessages.push(msg);
-        renderMessages();
-        scrollBottom();
-        await sendToServer(msg);
-        stream.getTracks().forEach(t=>t.stop());
-      };
-      recordStart = Date.now();
-      mediaRecorder.start();
-      isRecording = true;
-      document.getElementById('voiceRecordBtn').classList.add('recording');
-    } catch(e) { alert('Microphone access denied'); }
-  } else {
-    mediaRecorder?.stop();
-    isRecording = false;
-    document.getElementById('voiceRecordBtn').classList.remove('recording');
-  }
-}
-
-let recordStart = 0;
-function formatDuration(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
-function blobToDataUrl(blob) { return new Promise(r => { const fr=new FileReader(); fr.onload=e=>r(e.target.result); fr.readAsDataURL(blob); }); }
-
-function playVoice(id) {
-  const audio = document.getElementById('audio_' + id);
-  if (!audio) return;
-  const btn = audio.parentElement.querySelector('.voice-play-btn');
-  if (audio.paused) { audio.play(); if(btn) btn.textContent='⏸'; }
-  else { audio.pause(); if(btn) btn.textContent='▶'; }
-  audio.onended = () => { if(btn) btn.textContent='▶'; };
-}
-
-// ===== FILE / IMAGE =====
-function triggerFileInput() { document.getElementById('fileInput').click(); }
-
-function handleFileSelect(e) {
+// File attachment
+document.getElementById('fileInput').addEventListener('change',async(e)=>{
   const file = e.target.files[0];
-  if (!file) return;
-  if (file.size > 700*1024*1024) { alert('File exceeds 700 MB'); e.target.value=''; return; }
+  if(!file) return;
+  if(file.size>700*1024*1024){ alert("Max 700MB"); return; }
   const reader = new FileReader();
-  reader.onload = ev => { pendingFile = { name: file.name, size: file.size, dataUrl: ev.target.result }; };
-  reader.readAsDataURL(file);
-  e.target.value = '';
-}
-
-function handleGlobalPaste(e) {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      const file = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = ev => {
-        pendingImage = { dataUrl: ev.target.result, name: 'pasted-image.png', size: file.size };
-        const prev = document.getElementById('pastePreview');
-        prev.style.display = 'flex';
-        document.getElementById('pastePreviewImg').src = ev.target.result;
-        document.getElementById('pastePreviewName').textContent = 'pasted-image.png';
-        document.getElementById('pastePreviewSize').textContent = formatFileSize(file.size);
-      };
-      reader.readAsDataURL(file);
-      e.preventDefault();
-      return;
-    }
-  }
-}
-
-function clearPaste() {
-  pendingImage = null;
-  const prev = document.getElementById('pastePreview');
-  prev.style.display = 'none';
-  document.getElementById('pastePreviewImg').src = '';
-}
-
-// ===== TYPING =====
-function handleTyping() {
-  autoResize(document.getElementById('msgInput'));
-  if (!isTyping) {
-    isTyping = true;
-    sendSignal('typing');
-  }
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => { isTyping = false; }, 2000);
-}
-
-function showTyping(from) {
-  const el = document.getElementById('typingIndicator');
-  el.innerHTML = `<span class="typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span> <b>${escHtml(from)}</b> is typing...`;
-  clearTimeout(window._typingClear);
-  window._typingClear = setTimeout(() => { el.innerHTML = ''; }, 3000);
-}
-
-function autoResize(ta) { ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,220)+'px'; }
-function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
-
-// ===== CALL =====
-async function startCall() {
-  await sendSignal('call_request');
-  openCallOverlay();
-  document.getElementById('callStatusText').textContent = 'Calling...';
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
-    inCall = true;
-  } catch(e) {}
-}
-
-function showIncomingCall() {
-  document.getElementById('incomingCall').classList.add('active');
-  // ring animation
-}
-
-async function acceptCall() {
-  document.getElementById('incomingCall').classList.remove('active');
-  await sendSignal('call_accepted');
-  openCallOverlay();
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
-    inCall = true;
-  } catch(e) {}
-}
-
-function declineCall() {
-  document.getElementById('incomingCall').classList.remove('active');
-}
-
-function openCallOverlay() {
-  document.getElementById('callOverlay').classList.add('active');
-  document.getElementById('voiceChannelItem').style.color = 'var(--green)';
-  document.getElementById('callStatusText').textContent = 'Connected';
-  inCall = true;
-}
-
-function endCallUI() {
-  document.getElementById('callOverlay').classList.remove('active');
-  document.getElementById('voiceChannelItem').style.color = '';
-  inCall = false;
-  if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
-  if (screenStream) { screenStream.getTracks().forEach(t=>t.stop()); screenStream = null; }
-  screenSharing = false;
-  document.getElementById('screenShareBtn').classList.remove('active');
-}
-
-async function endCall() {
-  await sendSignal('call_ended');
-  endCallUI();
-}
-
-function toggleCallMic() {
-  callMicMuted = !callMicMuted;
-  const btn = document.getElementById('callMicBtn');
-  if (callMicMuted) { btn.textContent='🔇'; btn.classList.add('muted'); }
-  else { btn.textContent='🎤'; btn.classList.remove('muted'); }
-  if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = !callMicMuted);
-  document.getElementById('callParticipantIcons1').textContent = callMicMuted ? '🔇' : '🎤';
-}
-
-function toggleMic() {
-  micMuted = !micMuted;
-  const btn = document.getElementById('micToggleBtn');
-  btn.textContent = micMuted ? '🔇' : '🎤';
-  btn.classList.toggle('active', micMuted);
-  document.getElementById('myStatusPanel').textContent = micMuted ? 'Muted' : 'Online';
-}
-
-async function toggleScreenShare() {
-  if (!screenSharing) {
-    try {
-      screenStream = await navigator.mediaDevices.getDisplayMedia({video:true, audio:true});
-      const myVideo = document.getElementById('myVideo');
-      myVideo.srcObject = screenStream;
-      myVideo.style.display = 'block';
-      document.getElementById('myVideoTile').querySelector('.video-tile-avatar').style.display='none';
-      document.getElementById('screenShareBtn').classList.add('active');
-      document.getElementById('screenShareBtn').textContent = '🖥️';
-      screenSharing = true;
-      screenStream.getVideoTracks()[0].onended = () => { stopScreenShare(); };
-    } catch(e) {}
-  } else {
-    stopScreenShare();
-  }
-}
-
-function stopScreenShare() {
-  if (screenStream) { screenStream.getTracks().forEach(t=>t.stop()); screenStream=null; }
-  const myVideo = document.getElementById('myVideo');
-  myVideo.srcObject = null;
-  myVideo.style.display = 'none';
-  document.getElementById('myVideoTile').querySelector('.video-tile-avatar').style.display='flex';
-  document.getElementById('screenShareBtn').classList.remove('active');
-  screenSharing = false;
-}
-
-// ===== AUDIO SETTINGS =====
-async function populateAudioDevices() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const micSel = document.getElementById('micSelect');
-    const spkSel = document.getElementById('speakerSelect');
-    micSel.innerHTML = ''; spkSel.innerHTML = '';
-    devices.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.deviceId;
-      opt.textContent = d.label || d.kind;
-      if (d.kind === 'audioinput') micSel.appendChild(opt);
-      if (d.kind === 'audiooutput') spkSel.appendChild(opt);
+  reader.onload = async ()=> {
+    const msgObj={user:username,text:`[File:${file.name}]`,data:reader.result};
+    chatMessages.push(msgObj);
+    renderMessages();
+    await fetch(`${API}/messages`, {
+      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(msgObj)
     });
-    if (!micSel.options.length) micSel.innerHTML = '<option>Default Microphone</option>';
-    if (!spkSel.options.length) spkSel.innerHTML = '<option>Default Speaker</option>';
-  } catch(e) {
-    document.getElementById('micSelect').innerHTML = '<option>Default Microphone</option>';
-    document.getElementById('speakerSelect').innerHTML = '<option>Default Speaker</option>';
-  }
-}
-
-function openAudioSettings() { document.getElementById('audioModal').classList.add('active'); }
-function saveAudioSettings() { closeModal('audioModal'); }
-function updateSliderVal(el, valId) { document.getElementById(valId).textContent = el.value + '%'; }
-function setVoiceEffect(btn, effect) {
-  document.querySelectorAll('.voice-effect-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  voiceEffect = effect;
-}
-
-// ===== PFP =====
-function openPfpModal() { document.getElementById('pfpModal').classList.add('active'); }
-
-function handlePfpSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('pfpPreview').src = ev.target.result;
-    document.getElementById('pfpPreview').style.display = 'block';
   };
   reader.readAsDataURL(file);
-}
-
-function handlePfpDrop(e) {
-  e.preventDefault();
-  document.getElementById('pfpDropzone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (!file || !file.type.startsWith('image/')) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('pfpPreview').src = ev.target.result;
-    document.getElementById('pfpPreview').style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-}
-
-async function savePfp() {
-  const src = document.getElementById('pfpPreview').src;
-  if (!src || src === window.location.href) return;
-  localStorage.setItem('pfp_' + currentUser, src);
-  await sendSignal('pfp_update', { data: src });
-  refreshMyAvatar();
-  closeModal('pfpModal');
-}
-
-function refreshMyAvatar() {
-  setAvatarEl('myAvatarPanel', currentUser, 32, true);
-  renderMessages();
-}
-
-function refreshPeerAvatars() {
-  setAvatarEl('memberAvatarNevona', 'nevona5K', 32);
-  setAvatarEl('memberAvatarZarex', 'ZAREX', 32);
-  renderMessages();
-}
-
-// ===== PING =====
-async function pingPeer() {
-  await sendSignal('ping');
-  showToast(`Pinged ${peerUser}!`);
-}
-
-function showPingNotif(from) {
-  document.getElementById('pingNotifText').textContent = `${from} pinged you! 👋`;
-  const el = document.getElementById('pingNotif');
-  el.classList.add('active');
-  setTimeout(() => el.classList.remove('active'), 4000);
-}
-
-function closePingNotif() { document.getElementById('pingNotif').classList.remove('active'); }
-
-// ===== WIPE =====
-async function wipeChats() {
-  if (!confirm('Wipe all messages? This cannot be undone.')) return;
-  const pw = prompt('Enter your password to confirm:');
-  if (pw !== currentPassword) { alert('Wrong password'); return; }
-  await fetch(`${API}/wipe`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username:currentUser,password:currentPassword}) });
-  chatMessages = [];
-  renderMessages();
-}
-
-// ===== MEMBERS PANEL =====
-function toggleMembers() {
-  document.getElementById('membersPanel').classList.toggle('hidden');
-}
-
-// ===== MODAL HELPERS =====
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-
-// ===== TOAST =====
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:10px 20px;border-radius:var(--radius-lg);font-size:14px;z-index:999;animation:fadeIn 0.2s ease;';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2500);
-}
-
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(el => {
-  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('active'); });
 });
 </script>
 </body>
