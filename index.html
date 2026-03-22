@@ -754,7 +754,7 @@ function enterApp() {
 
   loadMessages();
   pollInterval = setInterval(pollAll, 2500);
-  populateAudioDevices();
+  setTimeout(populateAudioDevices, 2000);
 }
 
 function setAvatarEl(elId, username, size, isPanel=false) {
@@ -1402,7 +1402,11 @@ function stopScreenShare() {
 // ===== AUDIO SETTINGS =====
 async function populateAudioDevices() {
   try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
+    if (!navigator.mediaDevices) throw new Error('no media');
+    const devices = await Promise.race([
+      navigator.mediaDevices.enumerateDevices(),
+      new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 3000))
+    ]);
     const micSel = document.getElementById('micSelect');
     const spkSel = document.getElementById('speakerSelect');
     micSel.innerHTML = ''; spkSel.innerHTML = '';
