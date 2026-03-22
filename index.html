@@ -713,48 +713,32 @@ async function tryLogin() {
 }
 
 function enterApp() {
-  document.getElementById('loginOverlay').classList.add('hidden');
-  document.getElementById('mainApp').style.display = 'flex';
-
-  // Set up UI
-  const color = COLORS[currentUser];
-  const initial = currentUser[0].toUpperCase();
-  const peerInitial = peerUser[0].toUpperCase();
-  const peerColor = COLORS[peerUser];
-
-  document.getElementById('myNamePanel').textContent = currentUser;
-
-  // User panel avatar
-  setAvatarEl('myAvatarPanel', currentUser, 32, true);
-
-  // Call avatars
-  document.getElementById('myCallAvatar').textContent = initial;
-  document.getElementById('myCallAvatar').style.background = color;
-  document.getElementById('myVideoLabel').textContent = currentUser + ' (You)';
-  document.getElementById('peerCallAvatar').textContent = peerInitial;
-  document.getElementById('peerCallAvatar').style.background = peerColor;
-  document.getElementById('peerVideoLabel').textContent = peerUser;
-
-  // Participant names
-  document.getElementById('callParticipantName1').textContent = currentUser;
-  document.getElementById('callParticipantAvatar1').textContent = initial;
-  document.getElementById('callParticipantAvatar1').style.background = color;
-  document.getElementById('callParticipantName2').textContent = peerUser;
-  document.getElementById('callParticipantAvatar2').textContent = peerInitial;
-  document.getElementById('callParticipantAvatar2').style.background = peerColor;
-
-  // Members panel
-  setAvatarEl('memberAvatarNevona', 'nevona5K', 32);
-  setAvatarEl('memberAvatarZarex', 'ZAREX', 32);
-
-  // Incoming call
-  document.getElementById('incomingName').textContent = peerUser;
-  document.getElementById('incomingAvatar').textContent = peerInitial;
-  document.getElementById('incomingAvatar').style.background = peerColor;
-
+  try {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('mainApp').style.display = 'flex';
+    const color = COLORS[currentUser] || '#5865f2';
+    const peerColor = COLORS[peerUser] || '#eb459e';
+    const initial = currentUser[0].toUpperCase();
+    const peerInitial = peerUser[0].toUpperCase();
+    const safe = (id, fn) => { try { const el = document.getElementById(id); if(el) fn(el); } catch(e) {} };
+    safe('myNamePanel', el => el.textContent = currentUser);
+    safe('myAvatarPanel', el => { el.textContent = initial; el.style.cssText += ';width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;flex-shrink:0;background:'+color; });
+    safe('myCallAvatar', el => { el.textContent = initial; el.style.background = color; });
+    safe('myVideoLabel', el => el.textContent = currentUser + ' (You)');
+    safe('peerCallAvatar', el => { el.textContent = peerInitial; el.style.background = peerColor; });
+    safe('peerVideoLabel', el => el.textContent = peerUser);
+    safe('callParticipantName1', el => el.textContent = currentUser);
+    safe('callParticipantAvatar1', el => { el.textContent = initial; el.style.background = color; });
+    safe('callParticipantName2', el => el.textContent = peerUser);
+    safe('callParticipantAvatar2', el => { el.textContent = peerInitial; el.style.background = peerColor; });
+    safe('memberAvatarNevona', el => { el.textContent = 'N'; el.style.background = COLORS['nevona5K']; });
+    safe('memberAvatarZarex', el => { el.textContent = 'Z'; el.style.background = COLORS['ZAREX']; });
+    safe('incomingName', el => el.textContent = peerUser);
+    safe('incomingAvatar', el => { el.textContent = peerInitial; el.style.background = peerColor; });
+  } catch(e) { console.error('enterApp error:', e); }
   loadMessages();
   pollInterval = setInterval(pollAll, 2500);
-  setTimeout(populateAudioDevices, 2000);
+  setTimeout(populateAudioDevices, 3000);
 }
 
 function setAvatarEl(elId, username, size, isPanel=false) {
