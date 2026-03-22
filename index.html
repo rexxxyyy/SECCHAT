@@ -4,173 +4,187 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SECCHAT</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0a0a;
-  --primary: #0ff;
-  --secondary: #00aaff;
-  --danger: #ff0033;
-  --font: 'Rajdhani', monospace;
-}
-body, html { margin:0; padding:0; height:100%; font-family: var(--font); background:var(--bg); color:var(--primary); }
-#login, #chat { width:100%; height:100%; display:flex; justify-content:center; align-items:center; flex-direction:column; }
-button { margin:5px; padding:10px 20px; font-size:1rem; cursor:pointer; background:none; border:2px solid var(--primary); color:var(--primary); }
-button:hover { background:var(--primary); color:var(--bg); }
-#chatUI { display:none; flex-direction:column; width:90%; max-width:800px; height:90%; background:#111; border:2px solid var(--primary); border-radius:10px; padding:10px; overflow:hidden; }
-#messages { flex:1; overflow-y:auto; margin-bottom:10px; }
-.message { padding:5px; margin:5px 0; border-radius:5px; position:relative; }
-.message.self { background:rgba(0,255,255,0.1); text-align:right; }
-.message.peer { background:rgba(0,255,255,0.2); text-align:left; }
-.message .time { font-size:0.7rem; color:#00aaff; margin-left:5px; }
-.message .edit, .message .del { cursor:pointer; font-size:0.7rem; margin-left:5px; color:#f0f; }
-#inputBox { display:flex; gap:5px; }
-#inputBox input[type=text]{ flex:1; padding:10px; font-size:1rem; border-radius:5px; border:none; background:#222; color:#0ff; }
-#inputBox button{ border:none; border-radius:5px; background:var(--primary); color:var(--bg); }
-#fileInput{display:none;}
-#wipeclick{margin-top:5px;color:var(--danger);cursor:pointer;}
+  /* ================== Global Styles ================== */
+  * {margin:0;padding:0;box-sizing:border-box;font-family:'Rajdhani', monospace;}
+  body {background:#1e1e2f;color:#fff;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;}
+  #login, #chat {width:100%;height:100%;position:absolute;top:0;left:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#1e1e2f;}
+  button {cursor:pointer;background:#27293d;color:#00fff2;border:none;padding:10px 20px;margin:5px;font-weight:600;border-radius:5px;transition:0.2s;}
+  button:hover{background:#00fff2;color:#27293d;}
+  input, textarea {padding:10px;border:none;border-radius:5px;margin:5px;width:300px;background:#27293d;color:#fff;}
+  #chatContainer {display:flex;flex-direction:column;width:95%;max-width:900px;height:95%;background:#2a2c3c;border-radius:10px;overflow:hidden;}
+  #messages {flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:6px;}
+  .message {padding:8px 12px;border-radius:8px;max-width:80%;position:relative;word-wrap:break-word;transition:0.2s;}
+  .message.self {align-self:flex-end;background:#00fff2;color:#1b1b2a;}
+  .message.other {align-self:flex-start;background:#383a4d;}
+  .message span.time {font-size:10px;color:#aaa;position:absolute;bottom:2px;right:8px;}
+  #inputContainer {display:flex;padding:10px;background:#1f1f30;}
+  #inputContainer textarea {flex:1;height:50px;}
+  #inputContainer button {margin-left:5px;}
+  .attachment-preview {margin-top:5px;color:#00fff2;font-size:14px;cursor:pointer;}
+  @media(max-width:600px){#inputContainer textarea {width:calc(100% - 60px);}}
 </style>
 </head>
 <body>
 
+<!-- ================== LOGIN ================== -->
 <div id="login">
-  <h1>SECCHAT</h1>
+  <h2>SECCHAT Login</h2>
   <button onclick="loginPrompt('nevona5K')">nevona5K</button>
   <button onclick="loginPrompt('ZAREX')">ZAREX</button>
 </div>
 
-<div id="chatUI">
-  <div id="messages"></div>
-  <div id="inputBox">
-    <input type="text" id="messageInput" placeholder="Type a message...">
-    <input type="file" id="fileInput">
-    <button onclick="sendMessage()">Send</button>
-    <button onclick="document.getElementById('fileInput').click()">Attach</button>
+<!-- ================== CHAT ================== -->
+<div id="chat" style="display:none;">
+  <div id="chatContainer">
+    <div id="messages"></div>
+    <div id="inputContainer">
+      <textarea id="messageInput" placeholder="Type a message..."></textarea>
+      <button onclick="sendMessage()">Send</button>
+      <input type="file" id="fileInput" style="display:none" multiple>
+      <button onclick="document.getElementById('fileInput').click()">Attach</button>
+    </div>
   </div>
-  <div id="wipeclick" onclick="wipeChat()">WIPE ALL CHATS</div>
+  <button onclick="doWipe()">WIPE</button>
 </div>
 
 <script>
-const API = "https://secchat-backend-production.up.railway.app";
+const API = "https://secchat-backend-production.up.railway.app"; // your Railway backend URL
+let username = '';
+let peer = '';
+let chatMessages = [];
 
-let username="", peer="", chatMessages=[], autoDeleteTimers={};
-
-async function loginPrompt(user){
-  let pw = prompt(`Enter password for ${user}`);
-  const res = await fetch(`${API}/login`, {
+// ================== LOGIN ==================
+async function loginPrompt(user) {
+  let pw = prompt(`Enter password for ${user}:`);
+  if(!pw) return;
+  const res = await fetch(`${API}/login`,{
     method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({username:user,password:pw})
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({username:user,password:pw})
   });
-  if(res.status===200){
-    const data = await res.json();
-    if(data.ok){
-      username = user;
-      peer = data.peer;
-      document.getElementById('login').style.display='none';
-      document.getElementById('chatUI').style.display='flex';
-      loadMessages();
-      setInterval(loadMessages,3000);
-    } else alert("Wrong password");
-  } else alert("Login failed");
+  if(res.status===200){const data=await res.json();
+    if(data.ok){username=user;peer=data.peer;document.getElementById('login').style.display='none';document.getElementById('chat').style.display='flex';loadMessages();return;}
+  }
+  alert("Wrong password!");
 }
 
+// ================== MESSAGES ==================
 async function loadMessages(){
-  const res = await fetch(`${API}/messages`);
-  const msgs = await res.json();
-  chatMessages = msgs;
-  renderMessages();
+  try{
+    const res=await fetch(`${API}/messages`);
+    chatMessages=await res.json();
+    renderMessages();
+    scrollBottom();
+  }catch(e){console.error(e);}
 }
 
 function renderMessages(){
-  const container = document.getElementById('messages');
-  container.innerHTML="";
+  const container=document.getElementById('messages');
+  container.innerHTML='';
   chatMessages.forEach((m,i)=>{
-    let div = document.createElement('div');
-    div.className='message '+(m.user===username?'self':'peer');
-    div.innerHTML=`<span>${m.user}: ${m.text}</span> <span class="time">${m.time}</span>`;
+    const div=document.createElement('div');
+    div.className='message '+(m.user===username?'self':'other');
+    div.innerHTML=processMessage(m.text)+'<span class="time">'+m.time+'</span>';
+    // edit/delete buttons
     if(m.user===username){
-      const edit=document.createElement('span');
-      edit.className='edit'; edit.textContent='✎'; edit.onclick=()=>editMessage(i);
-      const del=document.createElement('span');
-      del.className='del'; del.textContent='🗑'; del.onclick=()=>deleteMessage(i);
-      div.appendChild(edit); div.appendChild(del);
+      const editBtn=document.createElement('button');editBtn.textContent='✎';editBtn.style.fontSize='10px';editBtn.onclick=()=>editMessage(i);div.appendChild(editBtn);
+      const delBtn=document.createElement('button');delBtn.textContent='🗑';delBtn.style.fontSize='10px';delBtn.onclick=()=>deleteMessage(i);div.appendChild(delBtn);
     }
     container.appendChild(div);
   });
-  container.scrollTop=container.scrollHeight;
 }
 
+// ================== SEND ==================
 async function sendMessage(){
-  const input = document.getElementById('messageInput');
-  let text=input.value;
+  const input=document.getElementById('messageInput');
+  let text=input.value.trim();
   if(!text) return;
-  // handle wait:(5s)=auto delete
-  const waitMatch = text.match(/^wait:\((\d+)s\)=(.*)$/);
-  let timerSec=null;
+  // handle wait:(5s)=text
+  const waitMatch=text.match(/^wait:\((\d+)s\)=(.*)$/i);
   if(waitMatch){
-    text=waitMatch[2];
-    timerSec=parseInt(waitMatch[1])*1000;
+    const delay=parseInt(waitMatch[1])*1000;const msgText=waitMatch[2];
+    text=msgText;
+    setTimeout(()=>{chatMessages=chatMessages.filter(m=>m.text!==msgText);renderMessages();},delay);
   }
-  const msgObj={user:username,text};
-  chatMessages.push(msgObj);
-  renderMessages();
-  await fetch(`${API}/messages`, {
-    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(msgObj)
-  });
-  if(timerSec){
-    const idx = chatMessages.length-1;
-    autoDeleteTimers[idx]=setTimeout(()=>deleteMessage(idx),timerSec);
-  }
-  input.value="";
-}
-
-// edit and delete
-async function editMessage(idx){
-  const newText = prompt("Edit your message:",chatMessages[idx].text);
-  if(newText!==null){
-    chatMessages[idx].text=newText;
-    renderMessages();
-    await fetch(`${API}/messages`, {
-      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(chatMessages[idx])
-    });
-  }
-}
-
-async function deleteMessage(idx){
-  chatMessages.splice(idx,1);
-  renderMessages();
-  await fetch(`${API}/wipe`,{
-    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username,password:prompt("Confirm password to delete")})
+  const msg={user:username,text:text,time:new Date().toLocaleTimeString()};
+  chatMessages.push(msg);
+  renderMessages();scrollBottom();input.value='';
+  await fetch(`${API}/messages`,{
+    method:'POST',headers:{"Content-Type":"application/json"},body:JSON.stringify(msg)
   });
 }
 
-// WIPE function
-async function wipeChat(){
-  const pw = prompt("Enter your password to wipe all chats");
-  const res = await fetch(`${API}/wipe`,{
-    method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({username,password:pw})
+// ================== EDIT/DELETE ==================
+function editMessage(idx){
+  const newText=prompt("Edit your message:",chatMessages[idx].text);
+  if(newText!==null){chatMessages[idx].text=newText;renderMessages();sendMessageEdit(idx,newText);}
+}
+async function sendMessageEdit(idx,text){
+  chatMessages[idx].text=text;
+  await fetch(`${API}/messages`,{
+    method:'POST',headers:{"Content-Type":"application/json"},body:JSON.stringify(chatMessages[idx])
   });
-  if(res.status===200){chatMessages=[]; renderMessages();}
-  else alert("Wrong password");
+}
+function deleteMessage(idx){
+  chatMessages.splice(idx,1);renderMessages();
+  // optionally call wipe endpoint for actual deletion from server
 }
 
-// File attachment
-document.getElementById('fileInput').addEventListener('change',async(e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.size>700*1024*1024){ alert("Max 700MB"); return; }
-  const reader = new FileReader();
-  reader.onload = async ()=> {
-    const msgObj={user:username,text:`[File:${file.name}]`,data:reader.result};
-    chatMessages.push(msgObj);
-    renderMessages();
-    await fetch(`${API}/messages`, {
-      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(msgObj)
-    });
-  };
-  reader.readAsDataURL(file);
+// ================== WIPE ==================
+async function doWipe(){
+  const pw=prompt("Enter your password to wipe all messages:");
+  if(!pw) return;
+  const res=await fetch(`${API}/wipe`,{
+    method:'POST',headers:{"Content-Type":"application/json"},body:JSON.stringify({username:username,password:pw})
+  });
+  if(res.status===200){chatMessages=[];renderMessages();alert('All chats wiped');}
+  else{alert('Wrong password');}
+}
+
+// ================== FILE ATTACHMENTS ==================
+document.getElementById('fileInput').addEventListener('change',async function(){
+  const files=[...this.files];
+  for(const f of files){
+    const text=`File: ${f.name} (${Math.round(f.size/1024)}KB)`;chatMessages.push({user:username,text:text,time:new Date().toLocaleTimeString()});
+    renderMessages();scrollBottom();
+  }
+  this.value='';
 });
+
+// ================== VOICE MESSAGE (BASIC) ==================
+let mediaRecorder, audioChunks=[];
+async function startRecording(){
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  mediaRecorder=new MediaRecorder(stream);
+  mediaRecorder.ondataavailable=e=>{audioChunks.push(e.data);};
+  mediaRecorder.onstop=sendVoiceMessage;
+  mediaRecorder.start();
+}
+function stopRecording(){mediaRecorder.stop();}
+function sendVoiceMessage(){
+  const blob=new Blob(audioChunks,{type:'audio/webm'});
+  audioChunks=[];
+  const url=URL.createObjectURL(blob);
+  chatMessages.push({user:username,text:`Voice Message: [play]`,time:new Date().toLocaleTimeString()});
+  renderMessages();scrollBottom();
+}
+
+// ================== TEXT → FILE ==================
+function processMessage(text){
+  const fileMatch=text.match(/^paste\[(.*)\] format=\((.*)\)$/i);
+  if(fileMatch){
+    const content=fileMatch[1];const ext=fileMatch[2];
+    const blob=new Blob([content],{type:'text/plain'});const url=URL.createObjectURL(blob);
+    return `<a href="${url}" download="file.${ext}" class="attachment-preview">Download .${ext}</a>`;
+  }
+  return text.replace(`@${username}`,'<span style="color:#00fff2">@'+username+'</span>');
+}
+
+// ================== SCROLL ==================
+function scrollBottom(){const c=document.getElementById('messages');c.scrollTop=c.scrollHeight;}
+setInterval(loadMessages,3000); // auto-refresh messages
 </script>
 </body>
 </html>
