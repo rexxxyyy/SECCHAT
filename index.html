@@ -737,7 +737,7 @@ function enterApp() {
     safe('incomingAvatar', el => { el.textContent = peerInitial; el.style.background = peerColor; });
   } catch(e) { console.error('enterApp error:', e); }
   loadMessages();
-  pollInterval = setInterval(pollAll, 2500);
+  pollInterval = setInterval(pollAll, 1000);
   setTimeout(populateAudioDevices, 3000);
 }
 
@@ -777,8 +777,9 @@ async function checkSignals() {
     const sigs = await res.json();
     for (const sig of sigs) {
       if (sig.type === 'call_request' && !inCall) showIncomingCall();
-      if (sig.type === 'call_accepted') openCallOverlay();
-      if (sig.type === 'call_ended') endCallUI();
+      if (sig.type === 'call_accepted') { openCallOverlay(); document.getElementById('callStatusText').textContent = 'Connected'; }
+      if (sig.type === 'call_ended' || sig.type === 'call_declined') endCallUI();
+      if (sig.type === 'offer' || sig.type === 'answer' || sig.type === 'ice') handleCallSignal(sig);
       if (sig.type === 'ping') showPingNotif(sig.from);
       if (sig.type === 'pfp_update') {
         localStorage.setItem('pfp_' + sig.from, sig.data);
@@ -919,8 +920,9 @@ async function sendMessage() {
       msg.text = deleteCmd.text;
       msg.selfDestruct = deleteCmd.seconds;
     }
-    // Check for ping
-    if (rawText.includes('@' + peerUser)) {
+    // Check for ping - match @nevona5K or @ZAREX
+    const pingRegex = new RegExp('@' + peerUser, 'i');
+    if (pingRegex.test(rawText)) {
       sendSignal('ping');
     }
   }
@@ -928,9 +930,12 @@ async function sendMessage() {
   ta.value = ''; ta.style.height = '';
   chatMessages.push(msg);
   document.getElementById('emptyState')?.remove();
-  renderMessages();
+  const newEl = buildMsgEl(msg);
+  const area = document.getElementById('messagesArea');
+  if (area.querySelector('.empty-state')) area.innerHTML = '';
+  area.appendChild(newEl);
   scrollBottom();
-  await sendToServer(msg);
+  sendToServer(msg); // fire and forget, no await
 
   // Self destruct
   if (msg.selfDestruct) {
@@ -1041,7 +1046,8 @@ function buildMsgEl(msg) {
     img.className = 'msg-image';
     img.src = msg.image.dataUrl;
     img.alt = msg.image.name || 'image';
-    img.onclick = () => window.open(msg.image.dataUrl, '_blank');
+    img.style.cssText = 'max-width:400px;max-height:300px;border-radius:8px;margin-top:4px;cursor:zoom-in;display:block;';
+    img.onclick = () => { const w=window.open(); w.document.write('<img src="'+msg.image.dataUrl+'" style="max-width:100%;"/>'); };
     contentWrap.appendChild(img);
   }
 
@@ -1172,42 +1178,193 @@ function addReaction(id) {
 }
 
 // ===== VOICE MESSAGES =====
+let voiceAnalyser = null;
+let voiceAnimFrame = null;
+let voiceRecordedBlob = null;
+let voiceStream = null;
+
 async function toggleVoiceRecord() {
   if (!isRecording) {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-      mediaRecorder = new MediaRecorder(stream);
+      voiceStream = await navigator.mediaDevices.getUserMedia({audio:true});
+      const audioCtx = new AudioContext();
+      const source = audioCtx.createMediaStreamSource(voiceStream);
+      voiceAnalyser = audioCtx.createAnalyser();
+      voiceAnalyser.fftSize = 64;
+      source.connect(voiceAnalyser);
+
+      mediaRecorder = new MediaRecorder(voiceStream);
       audioChunks = [];
       mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
       mediaRecorder.onstop = async () => {
-        const blob = new Blob(audioChunks, {type:'audio/webm'});
-        const dataUrl = await blobToDataUrl(blob);
-        const duration = formatDuration(Math.round((Date.now() - recordStart) / 1000));
-        const msg = {
-          id: Date.now().toString(),
-          sender: currentUser,
-          time: getTime(),
-          date: getDate(),
-          text: null,
-          voice: { dataUrl, duration },
-          deleted: false
-        };
-        chatMessages.push(msg);
-        renderMessages();
-        scrollBottom();
-        await sendToServer(msg);
-        stream.getTracks().forEach(t=>t.stop());
+        voiceRecordedBlob = new Blob(audioChunks, {type:'audio/webm'});
+        showVoicePreview(voiceRecordedBlob);
       };
       recordStart = Date.now();
       mediaRecorder.start();
       isRecording = true;
       document.getElementById('voiceRecordBtn').classList.add('recording');
+      document.getElementById('voiceRecordBtn').title = 'Stop recording';
+      showVoiceRecordingUI();
+      animateVoiceWaveform();
     } catch(e) { alert('Microphone access denied'); }
   } else {
     mediaRecorder?.stop();
+    cancelAnimationFrame(voiceAnimFrame);
     isRecording = false;
     document.getElementById('voiceRecordBtn').classList.remove('recording');
+    document.getElementById('voiceRecordBtn').title = 'Voice message';
+    hideVoiceRecordingUI();
   }
+}
+
+function showVoiceRecordingUI() {
+  let ui = document.getElementById('voiceRecordUI');
+  if (!ui) {
+    ui = document.createElement('div');
+    ui.id = 'voiceRecordUI';
+    ui.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 16px;background:rgba(242,63,67,0.1);border-top:1px solid var(--red);';
+    ui.innerHTML = `
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--red);animation:recordPulse 1s ease infinite;flex-shrink:0"></div>
+      <canvas id="voiceLiveCanvas" width="200" height="32" style="flex:1;border-radius:4px;background:var(--bg-tertiary)"></canvas>
+      <span id="voiceRecordTimer" style="font-size:13px;color:var(--red);font-family:var(--mono);min-width:40px">0:00</span>
+      <button onclick="cancelVoiceRecord()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px" title="Cancel">✕</button>
+    `;
+    document.querySelector('.input-area').prepend(ui);
+  }
+  ui.style.display = 'flex';
+  updateRecordTimer();
+}
+
+function hideVoiceRecordingUI() {
+  const ui = document.getElementById('voiceRecordUI');
+  if (ui) ui.style.display = 'none';
+  clearInterval(window._recordTimerInterval);
+}
+
+function updateRecordTimer() {
+  clearInterval(window._recordTimerInterval);
+  window._recordTimerInterval = setInterval(() => {
+    const el = document.getElementById('voiceRecordTimer');
+    if (el) el.textContent = formatDuration(Math.round((Date.now() - recordStart) / 1000));
+  }, 500);
+}
+
+function animateVoiceWaveform() {
+  const canvas = document.getElementById('voiceLiveCanvas');
+  if (!canvas || !voiceAnalyser) return;
+  const ctx = canvas.getContext('2d');
+  const bufferLength = voiceAnalyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  function draw() {
+    voiceAnimFrame = requestAnimationFrame(draw);
+    voiceAnalyser.getByteFrequencyData(dataArray);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const barWidth = (canvas.width / bufferLength) * 2;
+    let x = 0;
+    for (let i = 0; i < bufferLength; i++) {
+      const barHeight = (dataArray[i] / 255) * canvas.height;
+      ctx.fillStyle = `rgba(242,63,67,${0.4 + (dataArray[i]/255)*0.6})`;
+      ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
+      x += barWidth;
+    }
+  }
+  draw();
+}
+
+async function showVoicePreview(blob) {
+  hideVoiceRecordingUI();
+  const dataUrl = await blobToDataUrl(blob);
+  const duration = formatDuration(Math.round((Date.now() - recordStart) / 1000));
+
+  let preview = document.getElementById('voicePreviewUI');
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.id = 'voicePreviewUI';
+    preview.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--bg-secondary);border-top:1px solid var(--border);';
+    document.querySelector('.input-area').prepend(preview);
+  }
+
+  const audio = new Audio(dataUrl);
+  preview.innerHTML = `
+    <button id="voicePreviewPlay" onclick="toggleVoicePreviewPlay()" style="width:36px;height:36px;border-radius:50%;background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">▶</button>
+    <div style="flex:1;height:32px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;position:relative">
+      <canvas id="voicePreviewCanvas" width="300" height="32" style="width:100%;height:100%"></canvas>
+    </div>
+    <span style="font-size:13px;color:var(--text-muted);font-family:var(--mono)">${duration}</span>
+    <button onclick="sendVoiceMessage('${dataUrl}','${duration}')" style="background:var(--accent);border:none;border-radius:4px;color:#fff;cursor:pointer;font-size:13px;font-weight:600;padding:8px 14px;">Send</button>
+    <button onclick="cancelVoicePreview()" style="background:transparent;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:4px">✕</button>
+  `;
+  preview.style.display = 'flex';
+  window._voicePreviewAudio = audio;
+  window._voicePreviewDataUrl = dataUrl;
+  drawVoicePreviewWaveform(blob);
+  if (voiceStream) { voiceStream.getTracks().forEach(t=>t.stop()); voiceStream=null; }
+}
+
+async function drawVoicePreviewWaveform(blob) {
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioCtx = new AudioContext();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    const canvas = document.getElementById('voicePreviewCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const data = audioBuffer.getChannelData(0);
+    const step = Math.ceil(data.length / canvas.width);
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = 'rgba(88,101,242,0.7)';
+    for (let i = 0; i < canvas.width; i++) {
+      let max = 0;
+      for (let j = 0; j < step; j++) max = Math.max(max, Math.abs(data[i*step+j]||0));
+      const h = max * canvas.height;
+      ctx.fillRect(i, (canvas.height-h)/2, 1, h);
+    }
+  } catch(e) {}
+}
+
+function toggleVoicePreviewPlay() {
+  const audio = window._voicePreviewAudio;
+  const btn = document.getElementById('voicePreviewPlay');
+  if (!audio || !btn) return;
+  if (audio.paused) { audio.play(); btn.textContent='⏸'; }
+  else { audio.pause(); btn.textContent='▶'; }
+  audio.onended = () => { btn.textContent='▶'; };
+}
+
+async function sendVoiceMessage(dataUrl, duration) {
+  cancelVoicePreview();
+  const msg = {
+    id: Date.now().toString(),
+    sender: currentUser,
+    time: getTime(),
+    date: getDate(),
+    text: null,
+    voice: { dataUrl, duration },
+    deleted: false
+  };
+  chatMessages.push(msg);
+  const area = document.getElementById('messagesArea');
+  if (area.querySelector('.empty-state')) area.innerHTML = '';
+  area.appendChild(buildMsgEl(msg));
+  scrollBottom();
+  sendToServer(msg);
+}
+
+function cancelVoiceRecord() {
+  if (mediaRecorder && isRecording) { mediaRecorder.stop(); }
+  cancelAnimationFrame(voiceAnimFrame);
+  isRecording = false;
+  document.getElementById('voiceRecordBtn').classList.remove('recording');
+  hideVoiceRecordingUI();
+  if (voiceStream) { voiceStream.getTracks().forEach(t=>t.stop()); voiceStream=null; }
+}
+
+function cancelVoicePreview() {
+  const p = document.getElementById('voicePreviewUI');
+  if (p) p.style.display = 'none';
+  if (window._voicePreviewAudio) { window._voicePreviewAudio.pause(); window._voicePreviewAudio=null; }
 }
 
 let recordStart = 0;
@@ -1286,34 +1443,112 @@ function showTyping(from) {
 function autoResize(ta) { ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,220)+'px'; }
 function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
 
-// ===== CALL =====
+// ===== CALL (WebRTC) =====
+let peerConnection = null;
+let callAudioCtx = null;
+let speakingInterval = null;
+
+const RTC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
 async function startCall() {
   await sendSignal('call_request');
   openCallOverlay();
   document.getElementById('callStatusText').textContent = 'Calling...';
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
-    inCall = true;
-  } catch(e) {}
+  await initLocalAudio();
+  await createPeerConnection(true);
 }
 
 function showIncomingCall() {
+  if (inCall) return;
   document.getElementById('incomingCall').classList.add('active');
-  // ring animation
 }
 
 async function acceptCall() {
   document.getElementById('incomingCall').classList.remove('active');
   await sendSignal('call_accepted');
   openCallOverlay();
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
-    inCall = true;
-  } catch(e) {}
+  await initLocalAudio();
+  await createPeerConnection(false);
 }
 
 function declineCall() {
   document.getElementById('incomingCall').classList.remove('active');
+  sendSignal('call_declined');
+}
+
+async function initLocalAudio() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({audio:true, video:false});
+    startSpeakingDetection(localStream, 'myVideoTile');
+  } catch(e) { console.error('mic error', e); }
+}
+
+async function createPeerConnection(isInitiator) {
+  peerConnection = new RTCPeerConnection(RTC_CONFIG);
+
+  if (localStream) {
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+  }
+
+  peerConnection.ontrack = e => {
+    const remoteAudio = document.getElementById('remoteAudio') || (() => {
+      const a = document.createElement('audio');
+      a.id = 'remoteAudio';
+      a.autoplay = true;
+      document.body.appendChild(a);
+      return a;
+    })();
+    remoteAudio.srcObject = e.streams[0];
+    startSpeakingDetection(e.streams[0], 'peerVideoTile');
+  };
+
+  peerConnection.onicecandidate = e => {
+    if (e.candidate) sendSignal('ice', { candidate: JSON.stringify(e.candidate) });
+  };
+
+  if (isInitiator) {
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    sendSignal('offer', { sdp: JSON.stringify(offer) });
+  }
+}
+
+async function handleCallSignal(sig) {
+  if (!peerConnection) return;
+  if (sig.type === 'offer') {
+    const offer = JSON.parse(sig.sdp);
+    await peerConnection.setRemoteDescription(offer);
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    sendSignal('answer', { sdp: JSON.stringify(answer) });
+  } else if (sig.type === 'answer') {
+    await peerConnection.setRemoteDescription(JSON.parse(sig.sdp));
+  } else if (sig.type === 'ice') {
+    try { await peerConnection.addIceCandidate(JSON.parse(sig.candidate)); } catch(e) {}
+  }
+}
+
+function startSpeakingDetection(stream, tileId) {
+  try {
+    const ctx = new AudioContext();
+    const src = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    const tile = document.getElementById(tileId);
+
+    const interval = setInterval(() => {
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a,b) => a+b, 0) / data.length;
+      if (tile) {
+        tile.style.boxShadow = avg > 10 ? '0 0 0 3px var(--green)' : 'none';
+      }
+    }, 100);
+
+    if (tileId === 'myVideoTile') window._myDetectInterval = interval;
+    else window._peerDetectInterval = interval;
+  } catch(e) {}
 }
 
 function openCallOverlay() {
@@ -1329,6 +1564,13 @@ function endCallUI() {
   inCall = false;
   if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
   if (screenStream) { screenStream.getTracks().forEach(t=>t.stop()); screenStream = null; }
+  if (peerConnection) { peerConnection.close(); peerConnection = null; }
+  const ra = document.getElementById('remoteAudio');
+  if (ra) { ra.srcObject = null; }
+  clearInterval(window._myDetectInterval);
+  clearInterval(window._peerDetectInterval);
+  document.getElementById('myVideoTile').style.boxShadow = 'none';
+  document.getElementById('peerVideoTile').style.boxShadow = 'none';
   screenSharing = false;
   document.getElementById('screenShareBtn').classList.remove('active');
 }
